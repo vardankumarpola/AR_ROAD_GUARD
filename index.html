@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoadGuard AR | Smart Glasses Mobility &amp; Accident Response Console</title>
+<style>
+:root{--bg:#080d16;--panel:#101a29;--panel2:#142236;--line:#263750;--muted:#91a3ba;--text:#edf4ff;--cyan:#54d8e8;--blue:#7397ff;--green:#51d6a0;--amber:#ffc45c;--red:#ff667d;--shadow:0 18px 50px #0005}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 70% -10%,#1c3a5a55,transparent 38%),var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,Segoe UI,Arial}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:var(--cyan)}
+.shell{display:grid;grid-template-columns:255px minmax(0,1fr);min-height:100vh}
+.sidebar{background:#0b1320;border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:20px}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px}
+.brandmark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#50d9e8,#527cff);display:grid;place-items:center;color:#071321;font-size:20px;font-weight:900;box-shadow:0 8px 24px #54d8e833}
+.brand strong{font-size:18px;letter-spacing:.7px}
+.brand strong span{color:var(--cyan)}
+.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.4px;margin-top:1px}
+.navlabel{font-size:10px;color:#657a95;letter-spacing:1.6px;padding:0 11px;margin:3px 0 8px}
+.nav{display:grid;gap:5px}
+.nav button{border:0;background:transparent;color:#9eafc5;text-align:left;padding:10px 12px;border-radius:10px;display:flex;align-items:center;gap:11px;justify-content:flex-start}
+.nav button .ico{width:20px;text-align:center;font-size:15px}
+.nav button:hover,.nav button.active{background:#17283d;color:white}
+.nav button.active{box-shadow:inset 3px 0 var(--cyan)}
+.nav button.alert-nav{color:#ffb3bf;background:#321722}
+.nav button.alert-nav.active{box-shadow:inset 3px 0 var(--red)}
+.sidebottom{margin-top:auto}
+.device{padding:14px;border:1px solid var(--line);background:#101d2d;border-radius:14px}
+.devicehead{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:6px}
+.dot.warn{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.dot.bad{background:var(--red);box-shadow:0 0 10px var(--red)}
+.device p{font-size:11px;color:var(--muted);margin:8px 0 10px}
+.battery{height:6px;border-radius:10px;background:#26364b;overflow:hidden}
+.battery i{display:block;width:82%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green))}
+main{padding:24px clamp(16px,3vw,36px);max-width:1700px;width:100%;margin:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:2px;font-weight:700}
+.topbar h1{font-size:clamp(22px,3vw,29px);margin:4px 0 0;letter-spacing:-.7px}
+.topright{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.demo-tag,.status-pill,.state-badge{border:1px solid #31536a;background:#11283a;color:#9beaf0;padding:7px 11px;border-radius:30px;font-size:11px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.status-pill{color:#9de9c5;border-color:#285d4e;background:#10271f}
+.status-pill.red{color:#ffc7d0;border-color:#8a3446;background:#381620}
+.status-pill.amber{color:#ffe2a6;border-color:#7c5e27;background:#2d2413}
+.state-badge{padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:.4px}
+.state-badge.sim{border-color:#3a5676;background:#132539;color:#8ad7ec}
+.state-badge.hw{border-color:#296953;background:#102b22;color:#73e6b6}
+.state-badge.unavail{border-color:#6e404d;background:#2b1720;color:#f59fae}
+
+.emergency-banner{display:none;background:linear-gradient(120deg,#4d1522,#2e111b);border:1px solid var(--red);border-radius:15px;padding:16px 18px;margin-bottom:18px;box-shadow:0 12px 35px #ff47652b}
+.emergency-banner.show{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.emergency-banner h2{margin:0;font-size:17px;color:#ffd9df;letter-spacing:.3px}
+.emergency-banner p{margin:4px 0 0;font-size:12px;color:#f5b7c1}
+
+.page{display:none}
+.page.active{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.85fr);gap:17px}
+.card{background:linear-gradient(145deg,#111d2d,#0e1826);border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:var(--shadow)}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.cardhead h2,.card h2{font-size:14px;margin:0;letter-spacing:.2px}
+.sub{color:var(--muted);font-size:11px}
+
+/* IN-GLASSES REALISTIC AR LENS VIEWPORT */
+.glasses-shell{position:relative;padding:10px;border-radius:26px;background:linear-gradient(145deg,#1a222d,#0b1017 55%,#18212c);border:2px solid #2b384a;box-shadow:inset 0 1px 0 #ffffff1c, 0 22px 45px #0009}
+.glasses-bridge{position:absolute;top:0;left:50%;transform:translateX(-50%);width:62px;height:14px;background:#090e16;border-bottom-left-radius:14px;border-bottom-right-radius:14px;border:1px solid #2b384a;border-top:0;z-index:8;display:flex;align-items:center;justify-content:center}
+.glasses-bridge span{width:24px;height:3px;border-radius:3px;background:#2f4056}
+.glasses-temple-left,.glasses-temple-right{position:absolute;top:18%;width:8px;height:44%;background:#1e2938;border-radius:4px;z-index:8;opacity:.75}
+.glasses-temple-left{left:3px}.glasses-temple-right{right:3px}
+.vision{height:390px;position:relative;border-radius:19px;overflow:hidden;border:1px solid #354b64;background:#04080f;box-shadow:inset 0 0 60px #000c}
+.vision canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
+.vision video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:2;opacity:.88}
+.vision.cam-on video{display:block}
+.lens-sheen{position:absolute;inset:0;background:linear-gradient(125deg,#ffffff0d 0%,transparent 28%,transparent 76%,#54d8e808 100%);pointer-events:none;z-index:4}
+.lens-vignette{position:absolute;inset:0;box-shadow:inset 0 0 55px #02060ce0;pointer-events:none;z-index:4}
+
+/* Minimal Optical Projection HUD inside the glasses (uncluttered, lets rider see the road) */
+.hudtop{position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5;pointer-events:none}
+.hudlabel{font-size:10px;letter-spacing:1.4px;color:#d6eeffdd;text-shadow:0 1px 6px #000}
+.hudlabel small{display:block;color:#93b0c9;letter-spacing:.4px;margin-top:3px;font-size:9.5px}
+.speedbox{text-align:right;font-size:9.5px;color:#9ebad2;background:#060d178c;backdrop-filter:blur(4px);padding:6px 10px;border-radius:9px;border:1px solid #54d8e833}
+.speedbox strong{font-size:22px;color:#ffffff;display:block;line-height:1.1;font-variant-numeric:tabular-nums}
+.overlay{position:absolute;right:15px;top:82px;padding:9px 12px;border-radius:10px;background:#0a111ab8;backdrop-filter:blur(5px);border:1px solid var(--amber);color:#ffe2a3;min-width:168px;z-index:5;pointer-events:none;transition:.2s}
+.overlay b{display:block;font-size:11.5px;letter-spacing:.3px}
+.overlay small{font-size:10px;color:#d8c49b;display:block;margin-top:2px}
+.hud-crash-overlay{position:absolute;left:50%;top:18%;transform:translateX(-50%);z-index:6;display:none;background:#440f1bd9;border:1.5px solid var(--red);border-radius:11px;padding:9px 15px;text-align:center;box-shadow:0 0 28px #ff496666;max-width:86%}
+.hud-crash-overlay.show{display:block}
+.hud-crash-overlay b{display:block;color:#ffdbe2;font-size:12px;letter-spacing:.5px}
+.hud-crash-overlay small{display:block;color:#ffb4c1;font-size:10px;margin-top:2px}
+.hudbottom{position:absolute;left:14px;right:14px;bottom:12px;display:flex;justify-content:space-between;gap:7px;flex-wrap:wrap;z-index:5;pointer-events:none}
+.hudchip{padding:5px 9px;border:1px solid #ffffff22;background:#050b13b5;backdrop-filter:blur(4px);border-radius:7px;font-size:10px;color:#d7e7f7}
+.split-label-l,.split-label-r{position:absolute;bottom:48px;z-index:5;font-size:9.5px;letter-spacing:1.1px;padding:4px 8px;border-radius:5px;background:#070d16cc;border:1px solid #ffffff26;display:none;pointer-events:none}
+.split-label-l{left:14px;color:#9fb2c7}.split-label-r{right:14px;color:#ffca72;border-color:#ffc45c66}
+.vision.split-active .split-label-l,.vision.split-active .split-label-r{display:block}
+
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.btn{border:1px solid #34506d;background:#172940;color:#e9f3ff;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:650;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#203b5b;border-color:#5482a9}
+.btn.primary{background:linear-gradient(100deg,#1b8798,#3c6fc0);border-color:transparent;color:white}
+.btn.danger{background:#4d1d2d;border-color:#a2465e;color:#ffd0d8}
+.btn.danger:hover{background:#68243a}
+.btn.good{background:#15382c;border-color:#2e7d62;color:#b8f7df}
+.btn.ghost{background:transparent}
+
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.metric{background:#142337;border:1px solid #263b54;border-radius:12px;padding:12px}
+.metric span{display:block;color:var(--muted);font-size:10px}
+.metric strong{display:block;font-size:20px;margin-top:4px}
+.metric small{color:#8ea3ba;font-size:10px}
+.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+.riskbox{margin-top:12px;padding:13px;border-radius:12px;background:#142337;border:1px solid #263b54}
+.riskhead{display:flex;justify-content:space-between;font-size:11px}
+.riskbar{height:7px;background:#28384d;border-radius:9px;margin:10px 0 6px;overflow:hidden}
+.riskbar i{display:block;height:100%;width:66%;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));border-radius:9px;transition:.3s}
+.alertlist{margin-top:12px}
+.alertrow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #24354b}
+.alertrow:last-child{border:0}
+.alerticon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#2b281c;color:var(--amber);flex-shrink:0}
+.alertrow b{font-size:11px;display:block}
+.alertrow small{color:var(--muted);font-size:10px}
+
+.sectiongrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.wide{grid-column:1/-1}
+.setting{padding:11px 0;border-bottom:1px solid #26374c;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.setting:last-child{border:0}
+.setting b{font-size:12px;display:block}
+.setting small{color:var(--muted);font-size:10px}
+.setting input[type=range]{width:150px;accent-color:var(--cyan)}
+.setting select,.setting input[type=text],.setting input[type=tel]{background:#0d1928;color:var(--text);border:1px solid #344963;border-radius:8px;padding:7px 9px}
+
+.accident-dash-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
+.tele-box{background:#122033;border:1px solid #263b54;border-radius:11px;padding:11px}
+.tele-box span{display:block;font-size:10px;color:var(--muted)}
+.tele-box strong{display:block;font-size:15px;margin-top:4px}
+.tele-box small{display:block;font-size:10px;color:#8299b3;margin-top:2px}
+
+.sev-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.tier{padding:11px;border-radius:11px;border:1px solid #293e58;background:#101c2d;opacity:.6;transition:.2s}
+.tier b{display:block;font-size:12px}
+.tier small{font-size:10px;color:var(--muted)}
+.tier.active-minor{opacity:1;border-color:var(--green);background:#102920;color:#b2f5dc}
+.tier.active-possible{opacity:1;border-color:var(--amber);background:#2e2413;color:#ffe4a3}
+.tier.active-severe{opacity:1;border-color:var(--red);background:#3b1622;color:#ffd1da;box-shadow:0 0 18px #ff667d33}
+
+.status-stepper{display:grid;gap:8px;margin-top:10px}
+.step-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;border:1px solid #25384f;background:#111e2f;font-size:11px}
+.step-item.done{border-color:#2d6d55;background:#102820}
+.step-item.active-red{border-color:#933e53;background:#331722}
+.step-item.pending{opacity:.65}
+
+.sosbox{border:1px solid #744052;background:linear-gradient(140deg,#301b2a,#1c1c2c);border-radius:15px;padding:18px}
+.sosbox h2{font-size:17px;margin:0 0 6px}
+.sosbox p{color:#c9b1bc;font-size:11px}
+.sosactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.eventlog{max-height:220px;overflow:auto}
+.event{padding:9px 0;border-bottom:1px solid #26374c;font-size:11px;color:#c0cede}
+.event time{color:#7f93ab;margin-right:8px}
+.notice{padding:11px 13px;border-radius:10px;background:#282315;border:1px solid #65542b;color:#f4d99b;font-size:11px;margin-top:14px}
+.notice.red{background:#341720;border-color:#843b4e;color:#ffd0d8}
+
+.mapfake{height:255px;border-radius:12px;border:1px solid #31445b;position:relative;overflow:hidden;background-color:#142538;background-image:linear-gradient(30deg,transparent 47%,#52677a55 48%,#52677a55 50%,transparent 51%),linear-gradient(120deg,transparent 45%,#52677a44 46%,#52677a44 48%,transparent 49%),linear-gradient(0deg,transparent 47%,#52677a33 48%,#52677a33 50%,transparent 51%);background-size:120px 100px,150px 120px,95px 80px}
+.maproad{position:absolute;width:130%;height:20px;background:#596b7b;left:-10%;top:52%;transform:rotate(-19deg);border:3px solid #8293a2}
+.mapdot{position:absolute;left:48%;top:42%;width:15px;height:15px;border:4px solid #c2f7ff;background:#168ba5;border-radius:50%;box-shadow:0 0 0 8px #54d8e833}
+.maplabel{position:absolute;left:52%;top:35%;font-size:10px;background:#0c1724;padding:5px 7px;border-radius:6px;border:1px solid #2f4966}
+.pothole-pin{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--amber);border:2px solid #fff3cf;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 0 10px #ffc45c99}
+.pothole-pin.crit{background:var(--red);box-shadow:0 0 10px #ff667daa}
+.pothole-pin span{position:absolute;left:14px;top:-4px;background:#0b1522eb;border:1px solid #3a4f69;color:#e6f2ff;font-size:9px;padding:2px 6px;border-radius:5px;white-space:nowrap}
+
+.table-wrap{overflow:auto;border:1px solid #24374f;border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:680px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #203147}
+th{background:#111f31;color:#93abc7;font-size:10px;letter-spacing:.7px;text-transform:uppercase}
+tr:hover td{background:#132338}
+
+.scenario-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.scenario-card{background:#132135;border:1px solid #283f5b;border-radius:12px;padding:13px;display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.scenario-card h3{margin:0;font-size:13px}
+.scenario-card p{margin:4px 0 0;font-size:11px;color:var(--muted)}
+
+.toast{position:fixed;right:22px;bottom:22px;background:#172b40;border:1px solid #42617d;border-radius:11px;padding:12px 16px;box-shadow:var(--shadow);font-size:12px;max-width:340px;display:none;z-index:20}
+.toast.show{display:block;animation:pop .2s ease}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.smallprint{color:#788da5;font-size:10px;margin-top:12px}
+.formrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px}
+.field input,.field select{width:100%;background:#0c1725;border:1px solid #344963;border-radius:8px;padding:9px;color:white}
+
+@media(max-width:1150px){
+  .accident-dash-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1000px){
+  .shell{grid-template-columns:210px 1fr}
+  .grid{grid-template-columns:1fr}
+  .vision{height:350px}
+}
+@media(max-width:720px){
+  .shell{display:block}
+  .sidebar{padding:12px;gap:12px;border-right:0;border-bottom:1px solid var(--line)}
+  .brand{padding:2px}
+  .navlabel,.sidebottom{display:none}
+  .nav{display:flex;overflow:auto}
+  .nav button{white-space:nowrap;padding:9px}
+  .nav button .ico{display:none}
+  main{padding:16px 12px}
+  .topbar{align-items:flex-start}
+  .topright{justify-content:flex-start}
+  .sectiongrid,.scenario-grid,.sev-tiers,.formrow{grid-template-columns:1fr}
+  .wide{grid-column:auto}
+  .vision{height:295px}
+  .overlay{top:74px;right:9px;min-width:136px;padding:7px 9px}
+  .hudtop{left:10px;right:10px}
+  .hudbottom{left:9px;right:9px}
+  .hudchip{font-size:9px;padding:4px 6px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="brandmark">R</div><div><strong>ROAD<span>GUARD</span></strong><small>AR GLASSES &amp; CRASH ASSIST</small></div></div>
+ <div>
+  <div class="navlabel">WORKSPACE</div>
+  <nav class="nav">
+   <button class="active" data-page="overview"><span class="ico">▦</span>Overview</button>
+   <button data-page="vision"><span class="ico">◉</span>AR Vision Lab</button>
+   <button data-page="roadai"><span class="ico">⌁</span>Road AI &amp; Impact</button>
+   <button id="navEmergencyBtn" data-page="emergency"><span class="ico">⚠</span>Accident &amp; SOS</button>
+   <button data-page="history"><span class="ico">◷</span>Accident History</button>
+   <button data-page="location"><span class="ico">◎</span>Location &amp; Contacts</button>
+   <button data-page="settings"><span class="ico">⚙</span>Hardware &amp; Settings</button>
+  </nav>
+ </div>
+ <div class="sidebottom">
+  <div class="device">
+   <div class="devicehead"><b>RG-01 + BIKE IMU</b><span id="sideConnDot" class="warn">●</span></div>
+   <p id="sideConnText"><span class="dot warn"></span>Simulation Mode · No physical bridge</p>
+   <div class="battery"><i id="sideBatteryBar"></i></div>
+   <p style="margin-bottom:0">Unit pack <b style="color:white" id="sideBatteryTxt">82% (SIM)</b> · MPU6050 <b id="sideImuState">SIM</b></p>
+  </div>
+ </div>
+</aside>
+
+<main>
+ <header class="topbar">
+  <div>
+   <div class="eyebrow">ROADGUARD SMART GLASSES · BUILD 2.1</div>
+   <h1 id="pageTitle">Mobility Safety &amp; Accident Monitoring</h1>
+   <div class="sub">Realistic in-glasses rider HUD · Forward road hazard detection + motorcycle MPU6050 crash response.</div>
+  </div>
+  <div class="topright">
+   <span class="demo-tag" id="topDataMode">● SIMULATION MODE</span>
+   <span class="status-pill" id="topSystemPill"><i class="dot" id="topSystemDot"></i> MONITORING ACTIVE</span>
+  </div>
+ </header>
+
+ <!-- GLOBAL SCREEN 3 EMERGENCY BANNER -->
+ <div class="emergency-banner" id="globalEmergencyBanner">
+  <div>
+   <h2 id="bannerHeadline">⚠ ACCIDENT DETECTED — CHECK RIDER STATUS</h2>
+   <p id="bannerSub">Evaluating multi-sensor telemetry…</p>
+  </div>
+  <div class="controls" style="margin-top:0">
+   <button class="btn good" onclick="confirmRiderSafe()">I'm Safe · Cancel Alert</button>
+   <button class="btn danger" onclick="escalateNow()">Escalate Now</button>
+   <button class="btn" onclick="goPage('emergency')">Open Response Panel</button>
+  </div>
+ </div>
+
+ <!-- PAGE 1: OVERVIEW + REALISTIC IN-GLASSES POV + SCREEN 1 -->
+ <section class="page active" id="overview">
+  <div class="grid">
+   <div class="card">
+    <div class="cardhead">
+     <div><h2>INSIDE THE GLASSES · RIDER POV HUD</h2><div class="sub">First-person nighttime motorcycle optical view · Ground-projected AR hazard warning</div></div>
+     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <span class="state-badge sim" id="camStateBadge">SIMULATED POV</span>
+      <button class="btn" style="padding:5px 9px;font-size:10px" id="overviewModeBtn" onclick="cycleOverviewLensMode()">View: RoadGuard AR</button>
+      <button class="btn" style="padding:5px 9px;font-size:10px" onclick="toggleLiveCamera()">Webcam</button>
+     </div>
+    </div>
+
+    <div class="glasses-shell">
+     <div class="glasses-bridge"><span></span></div>
+     <div class="glasses-temple-left"></div>
+     <div class="glasses-temple-right"></div>
+     <div class="vision" id="visionScene">
+      <canvas id="roadCanvasOverview"></canvas>
+      <video id="liveCamVideo" autoplay playsinline muted></video>
+      <div class="lens-sheen"></div>
+      <div class="lens-vignette"></div>
+
+      <div class="split-label-l">NORMAL VIEW / HAZARD BLENDS IN</div>
+      <div class="split-label-r">ROADGUARD VIEW / DECISION TIME</div>
+
+      <div class="hudtop">
+       <div class="hudlabel">ROADGUARD / OPTICAL LENS<small id="hudSourceLabel">RIDER POV · NIGHT SCAN (SIMULATED)</small></div>
+       <div class="speedbox">BIKE SPEED (<span id="speedSrcTag">SIM</span>)<strong id="speedValue">38 <small style="font-size:11px">km/h</small></strong></div>
+      </div>
+
+      <div class="hud-crash-overlay" id="hudCrashOverview">
+       <b>⚠ ACCIDENT DETECTED — CHECK RIDER STATUS</b>
+       <small id="hudCrashOverviewSub">Emergency sequence active</small>
+      </div>
+
+      <div class="overlay" id="visionAlert"><b>⚠ POTHOLE AHEAD</b><small id="visionSub">HIGH · 12 m · TTH 1.1 s</small></div>
+
+      <div class="hudbottom">
+       <span class="hudchip" id="hudDistance">◉ 12 m · 45×10 cm</span>
+       <span class="hudchip" id="hudTth">⏱ TTH · 1.1 s</span>
+       <span class="hudchip" id="hudAction">↘ REDUCE SPEED</span>
+       <span class="hudchip" id="hudHaptic">⚡ HAPTIC · ARMED</span>
+      </div>
+     </div>
+    </div>
+
+    <div class="controls">
+     <button class="btn primary" onclick="simulateHazard('Pothole',12,'High','45 × 10 cm')">Pothole (12 m · High)</button>
+     <button class="btn" onclick="simulateHazard('Road crack',22,'Moderate','70 × 4 cm')">Road crack (22 m · Moderate)</button>
+     <button class="btn" onclick="simulateHazard('Stationary obstacle',5,'Critical','65 × 55 cm')">Obstacle (5 m · Critical)</button>
+     <button class="btn ghost" onclick="clearRoad()">Clear road (Low)</button>
+     <button class="btn" onclick="triggerHapticBuzzer('Manual test pulse','High')">Test Haptic/Buzzer</button>
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="cardhead"><h2>JOURNEY &amp; HAZARD STATUS</h2><span class="state-badge sim" id="telemetryBadge">SIMULATED</span></div>
+    <div class="metrics">
+     <div class="metric"><span>Road warning level</span><strong class="warn" id="riskMetric">HIGH</strong><small id="riskDesc">Low / Moderate / High / Critical</small></div>
+     <div class="metric"><span>Distance &amp; Time-to-Hazard</span><strong id="distanceMetric">12 m · 1.1 s</strong><small id="objectMetric">Pothole (45×10 cm)</small></div>
+     <div class="metric"><span>Vibration / Buzzer alert</span><strong class="good" id="hapticMetric">ARMED</strong><small id="hapticDesc">Glasses temple module</small></div>
+     <div class="metric"><span>GPS &amp; route status</span><strong id="gpsShortMetric" class="warn">UNREQUESTED</strong><small id="gpsShortDesc">Click Location to acquire</small></div>
+    </div>
+    <div class="riskbox">
+     <div class="riskhead"><span>POTHOLE / ROAD RISK INDEX</span><b id="riskPercent" class="warn">72 / 100</b></div>
+     <div class="riskbar"><i id="riskBar"></i></div>
+     <div class="sub">Calculated from hazard size, distance, speed &amp; time-to-hazard.</div>
+    </div>
+    <div class="alertlist">
+     <div class="alertrow"><div class="alerticon">⌁</div><div><b>Low → Moderate → High → Critical</b><small>Ground-projected AR ring first, temple haptic/buzzer under 15 m</small></div></div>
+     <div class="alertrow"><div class="alerticon">◉</div><div><b>MPU6050 Road Impact Log</b><small id="lastBumpSummary">Last road impact: 1.35 g (normal travel · SIMULATED)</small></div></div>
+     <div class="alertrow"><div class="alerticon">◎</div><div><b>Route Hazard Mapping</b><small id="potholeCountSummary">3 pothole markers mapped on route</small></div></div>
+    </div>
+   </div>
+  </div>
+
+  <!-- SCREEN 1 — COMPACT ACCIDENT MONITORING DASHBOARD -->
+  <div class="card" style="margin-top:17px">
+   <div class="cardhead">
+    <div>
+     <h2>SCREEN 1 · ACCIDENT MONITORING DASHBOARD (MPU6050 + GPS FUSION)</h2>
+     <div class="sub">Live motorcycle crash detection telemetry · Automatically initiates assistance if rider is unresponsive</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+     <span class="state-badge sim" id="screen1SourceBadge">SIMULATED READINGS</span>
+     <button class="btn" id="toggleMonitorBtn" onclick="toggleAccidentMonitoring()">Monitoring: ACTIVE</button>
+     <button class="btn danger" onclick="goPage('emergency')">Run Crash Scenarios</button>
+    </div>
+   </div>
+   <div class="accident-dash-grid">
+    <div class="tele-box"><span>Accident Monitoring</span><strong class="good" id="s1MonitorState">ACTIVE</strong><small id="s1MonitorSub">Multi-sensor watch on</small></div>
+    <div class="tele-box"><span>Current Motorcycle Speed</span><strong id="s1CurrSpeed">38 km/h</strong><small id="s1SpeedSource">SIMULATED</small></div>
+    <div class="tele-box"><span>Pre-Incident Speed</span><strong id="s1PreSpeed">—</strong><small>Captured at impact onset</small></div>
+    <div class="tele-box"><span>Sudden Deceleration</span><strong id="s1Decel">0.4 m/s²</strong><small id="s1DecelSub">Normal braking range</small></div>
+    <div class="tele-box"><span>Vertical Acceleration (Az)</span><strong id="s1VertAcc">1.01 g</strong><small>Baseline ~1.0 g gravity</small></div>
+    <div class="tele-box"><span>Impact Intensity (Peak)</span><strong id="s1Impact">1.15 g</strong><small id="s1ImpactBand">Nominal road vibration</small></div>
+    <div class="tele-box"><span>Possible Fall Detection</span><strong class="good" id="s1FallState">NO FALL (4°)</strong><small>Roll/pitch &lt; 55° threshold</small></div>
+    <div class="tele-box"><span>Rider Movement / Inactivity</span><strong id="s1Inactivity">ACTIVE</strong><small id="s1InactivitySub">Motion detected (SIM)</small></div>
+    <div class="tele-box"><span>GPS Location</span><strong id="s1Gps">UNAVAILABLE</strong><small id="s1GpsAcc">Grant permission or bridge</small></div>
+    <div class="tele-box"><span>Accident Detection Status</span><strong class="good" id="s1DetectStatus">NORMAL</strong><small id="s1DetectSub">No crash signature</small></div>
+   </div>
+  </div>
+
+  <div class="notice">PROTOTYPE DISCLOSURE: Unless connected to your Raspberry Pi / ESP32 WebSocket hardware bridge and browser Geolocation, sensor values are labeled <b>SIMULATED</b>. This web console cannot directly dispatch an ambulance without authorized cellular/API integration.</div>
+ </section>
+
+ <!-- PAGE 2: AR VISION LAB (WITH NORMAL VS ROADGUARD SPLIT VIEW) -->
+ <section class="page" id="vision">
+  <div class="sectiongrid">
+   <div class="card wide">
+    <div class="cardhead">
+     <div><h2>AR VISION LAB · IN-GLASSES NIGHTTIME COMPARISON</h2><div class="sub">Compare Normal View (hazard blends into dark road) vs RoadGuard AR View inside the glasses</div></div>
+     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="labModeAr" onclick="setLabViewMode('ar')">RoadGuard AR View</button>
+      <button class="btn" id="labModeSplit" onclick="setLabViewMode('split')">Split Compare (Normal vs AR)</button>
+      <button class="btn" id="labModeNormal" onclick="setLabViewMode('normal')">Normal View (No AR)</button>
+      <span class="state-badge sim">SIMULATED LENS</span>
+     </div>
+    </div>
+    <div class="glasses-shell">
+     <div class="glasses-bridge"><span></span></div>
+     <div class="glasses-temple-left"></div>
+     <div class="glasses-temple-right"></div>
+     <div class="vision" id="labVisionScene" style="height:405px">
+      <canvas id="roadCanvasLab"></canvas>
+      <div class="lens-sheen"></div>
+      <div class="lens-vignette"></div>
+      <div class="split-label-l">NORMAL VIEW / HAZARD BLENDS IN</div>
+      <div class="split-label-r">ROADGUARD VIEW / DECISION TIME</div>
+      <div class="hudtop">
+       <div class="hudlabel">ROADGUARD OPTICAL DISPLAY<small>LOW-BULK WAVEGUIDE PROJECTION</small></div>
+       <div class="speedbox">SPEED<strong id="labSpeedVal">38 <small style="font-size:11px">km/h</small></strong></div>
+      </div>
+      <div class="hud-crash-overlay" id="hudCrashLab">
+       <b>⚠ ACCIDENT DETECTED — CHECK RIDER STATUS</b>
+       <small id="hudCrashLabSub">Emergency sequence active</small>
+      </div>
+      <div class="overlay" id="labAlert"><b>⚠ POTHOLE AHEAD</b><small>HIGH · 12 m · TTH 1.1 s</small></div>
+      <div class="hudbottom"><span class="hudchip" id="labHudDim">SIZE · 45×10 cm</span><span class="hudchip" id="labHudTth">TTH · 1.1 s</span><span class="hudchip">HAPTIC · ARMED</span></div>
+     </div>
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="cardhead"><h2>HAZARD &amp; SPEED PARAMETERS</h2></div>
+    <div class="setting"><div><b>Object type</b><small>Road surface classification</small></div><select id="labType"><option>Pothole</option><option>Road crack</option><option>Stationary obstacle</option><option>Road debris</option></select></div>
+    <div class="setting"><div><b>Estimated dimensions</b><small id="labDimLabel">45 × 10 cm (W × D)</small></div><select id="labDim"><option value="20 × 4 cm">20 × 4 cm (Small)</option><option value="45 × 10 cm" selected>45 × 10 cm (Medium)</option><option value="85 × 16 cm">85 × 16 cm (Deep)</option><option value="65 × 55 cm">65 × 55 cm (Obstacle)</option></select></div>
+    <div class="setting"><div><b>Distance</b><small id="labDistLabel">12 metres</small></div><input id="labDistance" type="range" min="2" max="50" value="12"></div>
+    <div class="setting"><div><b>Motorcycle speed</b><small id="labSpeedLabel">38 km/h</small></div><input id="labSpeedRange" type="range" min="0" max="90" value="38"></div>
+    <div class="setting"><div><b>Severity level</b><small>Low, Moderate, High, Critical</small></div><select id="labSeverity"><option>Low</option><option>Moderate</option><option selected>High</option><option>Critical</option></select></div>
+    <div class="controls"><button class="btn primary" onclick="runLab()">Apply AR Scenario</button><button class="btn" onclick="clearRoad()">Reset Clear</button></div>
+   </div>
+
+   <div class="card">
+    <h2>DISTANCE &amp; TIME-TO-HAZARD BANDS</h2>
+    <div class="alertrow"><div class="alerticon" style="color:var(--green)">1</div><div><b>Low (Over 30 m or TTH &gt; 3.5 s)</b><small>Subtle optical contour on road</small></div></div>
+    <div class="alertrow"><div class="alerticon" style="color:#e8d16d">2</div><div><b>Moderate (15–30 m or TTH 2.0–3.5 s)</b><small>Amber AR ring + soft vibration pulse</small></div></div>
+    <div class="alertrow"><div class="alerticon">3</div><div><b>High (7–15 m or TTH 1.0–2.0 s)</b><small>Glowing AR highlight + temple haptic/buzzer</small></div></div>
+    <div class="alertrow"><div class="alerticon" style="color:var(--red)">4</div><div><b>Critical (&lt; 7 m or TTH &lt; 1.0 s)</b><small>Red urgent contour + continuous haptic/buzzer</small></div></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- PAGE 3: ROAD AI & MPU6050 IMPACT -->
+ <section class="page" id="roadai">
+  <div class="sectiongrid">
+   <div class="card">
+    <h2>DETECTION &amp; IMPACT THRESHOLDS</h2>
+    <p class="sub">Configure pothole scan sensitivity and motorcycle MPU6050 impact logging.</p>
+    <div class="setting"><div><b>Minimum pothole size</b><small id="damageLabel">10 cm</small></div><input type="range" min="3" max="40" value="10" id="damageRange"></div>
+    <div class="setting"><div><b>Vision confidence</b><small id="confidenceLabel">80% minimum</small></div><input type="range" min="50" max="99" value="80" id="confidenceRange"></div>
+    <div class="setting"><div><b>Warning output</b><small>Glasses temple feedback</small></div><select id="alertStyle"><option>Visual + Vibration + Buzzer</option><option>Visual + Vibration</option><option>Visual only</option></select></div>
+    <div class="controls">
+     <button class="btn primary" onclick="toast('Thresholds updated for this session.')">Save Preferences</button>
+     <button class="btn" onclick="simulateRoadImpact()">Record Sample Road Bump (MPU6050)</button>
+    </div>
+   </div>
+   <div class="card">
+    <div class="cardhead"><h2>LIVE MPU6050 TELEMETRY</h2><span class="state-badge sim" id="imuBadge">SIMULATED</span></div>
+    <div class="metrics">
+     <div class="metric"><span>Accel X / Y / Z (g)</span><strong id="imuAccelVec" style="font-size:15px">0.04 / -0.02 / 1.01</strong><small>Motorcycle chassis frame</small></div>
+     <div class="metric"><span>Resultant |a|</span><strong id="imuResultant">1.01 g</strong><small>Normal ~1.0 g</small></div>
+     <div class="metric"><span>Tilt / Roll Angle</span><strong id="imuTilt">4°</strong><small>Fall flag &ge; 55°</small></div>
+     <div class="metric"><span>Gyro Angular Rate</span><strong id="imuGyro">12 °/s</strong><small>Rapid orientation &ge; 220 °/s</small></div>
+    </div>
+    <p class="smallprint">Hardware plan: MPU6050 mounted rigidly on motorcycle frame near CG so glasses stay light and unaffected by head turns.</p>
+   </div>
+   <div class="card wide">
+    <h2>ROAD SCAN &amp; IMPACT LOG</h2>
+    <div class="eventlog" id="roadLog"><div class="event"><time>INIT</time>Forward scan and MPU6050 impact monitor initialized (SIMULATED).</div></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- PAGE 4: SCREENS 2, 3, 4 & 6 -->
+ <section class="page" id="emergency">
+  <div class="sectiongrid">
+   <div class="sosbox" id="responseBox">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+     <div class="eyebrow" style="color:#ff9bad">SCREEN 3 · AUTOMATIC EMERGENCY RESPONSE</div>
+     <span class="state-badge sim" id="respModeBadge">SIMULATION WORKFLOW</span>
+    </div>
+    <h2 id="respHeadline">Standby · Monitoring Rider Status</h2>
+    <p id="respSub">When a serious accident is detected, RoadGuard locks the latest valid GPS, checks rider status inside the glasses &amp; phone console, alerts the configured emergency contact, and provides 112 / 108 emergency call options.</p>
+    <div id="cancelWindowBox" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#3a1924;border:1px solid var(--red)">
+     <b style="font-size:12px;color:#ffd8df">Rider Check-In Window: <span id="countdownText">15 s</span></b>
+     <div class="sub" style="color:#f4bcc7">Severe accidents bypass waiting and notify immediately. Uncertain detections allow cancellation.</div>
+    </div>
+    <div class="sosactions">
+     <button class="btn good" onclick="confirmRiderSafe()">I'm Okay · Cancel Alert</button>
+     <button class="btn danger" onclick="escalateNow()">Trigger / Escalate SOS</button>
+     <button class="btn" onclick="initiateEmergencyCall('112')">Call 112 (India ERSS)</button>
+     <button class="btn" onclick="initiateEmergencyCall('108')">Call 108 (Telangana Ambulance)</button>
+    </div>
+    <div class="controls" style="margin-top:10px">
+     <a class="btn ghost" href="tel:112" onclick="return confirmRealCall('112')">Phone Dialer: tel:112</a>
+     <a class="btn ghost" href="tel:108" onclick="return confirmRealCall('108')">Phone Dialer: tel:108</a>
+    </div>
+    <div class="notice red" style="margin-top:12px">
+     <b>Authorized Integration Notice:</b> Hospital and ambulance dispatch integration requires an <b>authorized API or service connection</b> (e.g., state ERSS / 108 gateway + cellular GSM/LTE module). This dashboard does not claim an ambulance has been dispatched unless confirmed by an authorized backend.
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="cardhead">
+     <div><h2>SCREEN 4 · EMERGENCY RESPONSE STATUS</h2><div class="sub">Live delivery &amp; response progression</div></div>
+     <span class="state-badge sim" id="s4StatusBadge">SIMULATED</span>
+    </div>
+    <div class="metrics" style="margin-bottom:10px">
+     <div class="metric"><span>Coordinates</span><strong id="s4Coords" style="font-size:13px">Unavailable</strong><small><a id="s4MapLink" href="#" target="_blank" rel="noopener" style="display:none">Open location on map ↗</a><span id="s4MapDisabled">Acquire GPS first</span></small></div>
+     <div class="metric"><span>Incident Time &amp; Contact</span><strong id="s4Time" style="font-size:13px">—</strong><small id="s4Contact">No contact configured</small></div>
+    </div>
+    <div class="status-stepper" id="statusStepper">
+     <div class="step-item pending" data-step="0"><span>1. Accident suspected</span><b id="st0">IDLE</b></div>
+     <div class="step-item pending" data-step="1"><span>2. GPS location acquired</span><b id="st1">PENDING</b></div>
+     <div class="step-item pending" data-step="2"><span>3. Emergency contact notified</span><b id="st2">PENDING</b></div>
+     <div class="step-item pending" data-step="3"><span>4. Emergency call initiated (112 / 108)</span><b id="st3">PENDING</b></div>
+     <div class="step-item pending" data-step="4"><span>5. Emergency service response pending</span><b id="st4">NOT ACTIVE</b></div>
+     <div class="step-item pending" data-step="5"><span>6. Assistance confirmed</span><b id="st5">UNCONFIRMED</b></div>
+    </div>
+    <div class="controls">
+     <button class="btn" onclick="markAssistanceConfirmed()">Mark Assistance Confirmed (Demo)</button>
+     <button class="btn ghost" onclick="resetEmergencyWorkflow()">Reset Status</button>
+    </div>
+   </div>
+
+   <div class="card wide">
+    <div class="cardhead">
+     <div><h2>SCREEN 2 · INTELLIGENT ACCIDENT DETECTION ENGINE</h2><div class="sub">Multi-sensor evaluation (MPU6050 acceleration, peak impact, gyro orientation/fall, GPS speed drop &amp; rider inactivity)</div></div>
+     <span class="state-badge sim" id="s2Badge">SIMULATED EVALUATION</span>
+    </div>
+    <div class="sev-tiers">
+     <div class="tier" id="tierMinor"><b>MINOR EVENT</b><small>Small bump / brief handling tap · Log only, no automatic emergency alert</small></div>
+     <div class="tier" id="tierPossible"><b>POSSIBLE SERIOUS ACCIDENT</b><small>Moderate impact + tilt/deceleration · Rider check-in with cancellation window</small></div>
+     <div class="tier" id="tierSevere"><b>SEVERE ACCIDENT</b><small>Strong sustained impact + fall motion + speed drop · Immediate emergency response</small></div>
+    </div>
+    <div class="accident-dash-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+     <div class="tele-box"><span>1. Speed Before Accident</span><strong id="cPreSpeed">—</strong><small>Last valid pre-impact speed</small></div>
+     <div class="tele-box"><span>2. Speed After Event</span><strong id="cPostSpeed">—</strong><small>Post-impact GPS reading</small></div>
+     <div class="tele-box"><span>3. Change in Speed (Δv)</span><strong id="cDeltaV">—</strong><small>Speed drop indicator</small></div>
+     <div class="tele-box"><span>4. Estimated Deceleration</span><strong id="cDecel">—</strong><small id="cDecelNote">Requires valid Δt</small></div>
+     <div class="tele-box"><span>5. Peak Acceleration</span><strong id="cPeakG">—</strong><small>MPU6050 resultant |a|</small></div>
+     <div class="tele-box"><span>6. Impact Event Duration</span><strong id="cDuration">—</strong><small>Filters &lt;55 ms false spikes</small></div>
+     <div class="tele-box"><span>7. Orientation &amp; Inactivity</span><strong id="cTiltInact">—</strong><small>Gyro tilt / stillness check</small></div>
+     <div class="tele-box"><span>8. Classified Severity</span><strong id="cSeverity">NORMAL</strong><small id="cReason">Awaiting event</small></div>
+    </div>
+    <div class="smallprint">Engineering Note: Speed is one risk indicator, not proof of injury severity. This system does not diagnose medical injuries or invent injury percentages; real deployment thresholds must be calibrated through controlled physical testing.</div>
+   </div>
+
+   <div class="card wide">
+    <div class="cardhead">
+     <div><h2>SCREEN 6 · TESTING &amp; DEMONSTRATION SCENARIOS</h2><div class="sub">Run controlled multi-sensor crash scenarios (all scenarios strictly labeled SIMULATED)</div></div>
+     <span class="state-badge sim">ALL SCENARIOS SIMULATED</span>
+    </div>
+    <div class="scenario-grid">
+     <div class="scenario-card">
+      <div>
+       <div style="display:flex;justify-content:space-between;align-items:center"><h3>Scenario A · Small Road Bump (Low Speed)</h3><span class="state-badge sim">SIMULATED</span></div>
+       <p>22→20 km/h, 2.1 g vertical bump, 85 ms, 6° tilt, rider active. Expected: <b>MINOR EVENT</b>, no automatic emergency notification.</p>
+      </div>
+      <button class="btn" onclick="runScenario('A')">Run Scenario A (SIMULATED)</button>
+     </div>
+     <div class="scenario-card">
+      <div>
+       <div style="display:flex;justify-content:space-between;align-items:center"><h3>Scenario B · Moderate Impact + Possible Fall</h3><span class="state-badge sim">SIMULATED</span></div>
+       <p>36→4 km/h in 1.6 s, 4.6 g peak, 140 ms, 68° fall tilt, 9 s stillness. Expected: <b>POSSIBLE SERIOUS ACCIDENT</b>, rider status check.</p>
+      </div>
+      <button class="btn primary" onclick="runScenario('B')">Run Scenario B (SIMULATED)</button>
+     </div>
+     <div class="scenario-card">
+      <div>
+       <div style="display:flex;justify-content:space-between;align-items:center"><h3>Scenario C · High-Speed Collision + Fall Motion</h3><span class="state-badge sim">SIMULATED</span></div>
+       <p>68→0 km/h in 1.2 s, 8.4 g peak, 210 ms, 82° tilt, 360 °/s gyro, 18 s stillness. Expected: <b>SEVERE ACCIDENT</b>, immediate notification workflow.</p>
+      </div>
+      <button class="btn danger" onclick="runScenario('C')">Run Scenario C (SIMULATED)</button>
+     </div>
+     <div class="scenario-card">
+      <div>
+       <div style="display:flex;justify-content:space-between;align-items:center"><h3>Scenario D · False Impact (Pothole / Handling)</h3><span class="state-badge sim">SIMULATED</span></div>
+       <p>28→26 km/h, brief 4.2 g spike (35 ms duration), 11° tilt, no inactivity. Expected: <b>MINOR EVENT (Event Review)</b>, no unnecessary SOS.</p>
+      </div>
+      <button class="btn" onclick="runScenario('D')">Run Scenario D (SIMULATED)</button>
+     </div>
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="cardhead"><h2>EMERGENCY PACKET PREVIEW (STEP 5)</h2><span class="state-badge sim" id="packetSourceBadge">LOCAL PREVIEW</span></div>
+    <div class="setting"><div><b>Rider Name / ID</b></div><strong id="pktRider">Vardan (RG-RIDER-01)</strong></div>
+    <div class="setting"><div><b>Accident Timestamp</b></div><strong id="pktTime">—</strong></div>
+    <div class="setting"><div><b>Pre-Impact Speed &amp; Severity</b></div><strong id="pktSpeedSev">—</strong></div>
+    <div class="setting"><div><b>GPS &amp; Google Maps Link</b></div><strong id="pktMap" style="font-size:11px;text-align:right">Unavailable</strong></div>
+    <div class="setting"><div><b>Configured Emergency Contact</b></div><strong id="pktContact">Not set</strong></div>
+   </div>
+   <div class="card">
+    <div class="cardhead"><h2>EMERGENCY ACTIVITY LOG</h2><span class="sub">REAL-TIME AUDIT</span></div>
+    <div id="emergencyLog" class="eventlog"><div class="event"><time>READY</time>Accident monitoring active. No emergency events recorded.</div></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- PAGE 5: SCREEN 5 — ACCIDENT HISTORY -->
+ <section class="page" id="history">
+  <div class="sectiongrid">
+   <div class="card wide">
+    <div class="cardhead">
+     <div><h2>SCREEN 5 · ACCIDENT &amp; IMPACT HISTORY</h2><div class="sub">Recorded multi-sensor events stored locally in browser · Click any row to inspect details</div></div>
+     <div class="controls" style="margin-top:0">
+      <button class="btn" onclick="exportHistoryJson()">Export Log (JSON)</button>
+      <button class="btn ghost" onclick="clearHistory()">Clear History</button>
+     </div>
+    </div>
+    <div class="table-wrap">
+     <table>
+      <thead>
+       <tr>
+        <th>Date &amp; Time</th>
+        <th>Source</th>
+        <th>Speed Before Impact</th>
+        <th>Peak Accel</th>
+        <th>Estimated Severity</th>
+        <th>GPS Coordinates</th>
+        <th>Notification Status</th>
+       </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+     </table>
+    </div>
+   </div>
+   <div class="card wide" id="historyDetailCard">
+    <div class="cardhead"><h2>SELECTED INCIDENT DETAILS</h2><span class="sub" id="histDetTitle">Select an incident row above</span></div>
+    <div id="histDetBody" class="sub">No incident selected.</div>
+   </div>
+  </div>
+ </section>
+
+ <!-- PAGE 6: LOCATION, ROUTE POTHOLE MAP & SCREEN 7 EMERGENCY CONTACT SETTINGS -->
+ <section class="page" id="location">
+  <div class="sectiongrid">
+   <div class="card">
+    <div class="cardhead"><h2>GPS &amp; ROUTE MAP WITH POTHOLES</h2><span class="state-badge unavail" id="gpsBadge">GPS UNREQUESTED</span></div>
+    <div class="mapfake" id="routeMap">
+     <div class="maproad"></div>
+     <div class="mapdot" title="Current motorcycle position"></div>
+     <div class="maplabel" id="mapRiderLabel">Rider position (awaiting GPS)</div>
+     <div class="pothole-pin" style="left:28%;top:62%" onclick="toast('Logged Pothole #1 · 42×9 cm · High risk (SIMULATED)')"><span>Pothole 42×9cm</span></div>
+     <div class="pothole-pin crit" style="left:65%;top:36%" onclick="toast('Logged Pothole #2 · 78×15 cm · Critical (SIMULATED)')"><span>Deep Pothole 78×15cm</span></div>
+     <div class="pothole-pin" style="left:79%;top:27%" onclick="toast('Logged Crack #3 · 60×4 cm · Moderate (SIMULATED)')"><span>Crack 60×4cm</span></div>
+    </div>
+    <div class="controls">
+     <button class="btn primary" onclick="getLocation()">Acquire Browser GPS</button>
+     <button class="btn" onclick="copyLocation()">Copy Coordinates</button>
+     <a class="btn ghost" id="openGoogleMapBtn" href="#" target="_blank" rel="noopener" onclick="return checkMapLink()">Open in Google Maps</a>
+    </div>
+    <p class="sub" id="locationText" style="margin-top:10px">Location not requested yet. Browser Geolocation supplies live coordinates on permission.</p>
+   </div>
+
+   <div class="card">
+    <div class="cardhead"><h2>SCREEN 7 · EMERGENCY CONTACT SETTINGS</h2><span class="state-badge sim">LOCAL STORAGE</span></div>
+    <p class="sub">Configure rider ID, contacts, communication method &amp; GPS sharing permission. Never invent hospital numbers.</p>
+    <div class="formrow" style="margin-top:10px">
+     <div class="field"><label>Rider Name / Registered ID</label><input id="riderIdInput" value="Vardan (RG-RIDER-01)"></div>
+     <div class="field"><label>Primary Emergency Contact</label><input id="contactName" placeholder="e.g., Parent / Guardian"></div>
+     <div class="field"><label>Primary Phone Number</label><input id="contactPhone" placeholder="+91 9XXXXXXXXX" inputmode="tel"></div>
+     <div class="field"><label>Secondary Contact (Name &amp; Phone)</label><input id="secondaryContact" placeholder="e.g., Friend · +91 9XXXXXXXXX"></div>
+     <div class="field">
+      <label>Emergency Communication Method</label>
+      <select id="commMethod">
+       <option value="GSM/LTE SMS + Voice (Hardware)">GSM/LTE SMS + Voice (Hardware)</option>
+       <option value="Companion Smartphone Bridge">Companion Smartphone Bridge</option>
+       <option value="Simulated Demo Notification" selected>Simulated Demo Notification</option>
+      </select>
+     </div>
+     <div class="field">
+      <label>GPS Sharing Permission</label>
+      <select id="gpsPermission">
+       <option value="Enabled" selected>Enabled (Share on Serious Accident)</option>
+       <option value="Disabled">Disabled (Do not attach GPS)</option>
+      </select>
+     </div>
+    </div>
+    <div class="controls">
+     <button class="btn primary" onclick="saveContact()">Save Emergency Settings</button>
+    </div>
+    <p id="contactStatus" class="smallprint">Using default demo profile. Save a contact to include in emergency packets.</p>
+   </div>
+  </div>
+ </section>
+
+ <!-- PAGE 7: HARDWARE CONNECTION, AFFORDABLE ARCHITECTURE & SETTINGS -->
+ <section class="page" id="settings">
+  <div class="sectiongrid">
+   <div class="card">
+    <div class="cardhead"><h2>HARDWARE CONNECTION BRIDGE</h2><span class="state-badge sim" id="hwConnBadge">SIMULATED</span></div>
+    <p class="sub">Connect this web console to your Raspberry Pi / ESP32 local WebSocket telemetry server when testing physical hardware.</p>
+    <div class="setting"><div><b>WebSocket Endpoint</b><small>Local Python/Pi sensor service</small></div><input type="text" id="wsUrlInput" value="ws://localhost:8765" style="width:190px"></div>
+    <div class="setting"><div><b>Operating Mode</b><small>Auto-labels every telemetry readout</small></div><strong id="hwModeText" class="warn">SIMULATION MODE</strong></div>
+    <div class="controls">
+     <button class="btn primary" onclick="connectHardwareBridge()">Connect Hardware Bridge</button>
+     <button class="btn" onclick="disconnectHardwareBridge()">Switch to Simulation</button>
+    </div>
+    <p class="smallprint">Expected JSON packet from Pi/ESP32: <code>{"speedKmh":34,"ax":0.1,"ay":-0.1,"az":1.02,"gyroDps":15,"tiltDeg":5,"durationMs":40,"gps":{"lat":17.385,"lon":78.4867,"acc":8}}</code></p>
+   </div>
+
+   <div class="card">
+    <h2>VIBRATION, BUZZER &amp; DEVICE PROFILE</h2>
+    <div class="setting"><div><b>Glasses / Bike Unit ID</b><small>Split architecture</small></div><strong>RG-01 + BIKE-IMU</strong></div>
+    <div class="setting"><div><b>Temple Haptic / Buzzer</b><small>Browser vibration + optional audio tone</small></div><select id="buzzerMode"><option value="on" selected>Enabled (Vibrate + Tone)</option><option value="vibe">Vibration Only</option><option value="off">Muted</option></select></div>
+    <div class="setting"><div><b>Pothole Route Sync</b><small>Log new detections automatically</small></div><select id="autoLogPotholes"><option value="yes" selected>Enabled</option><option value="no">Manual only</option></select></div>
+    <div class="controls"><button class="btn" onclick="triggerHapticBuzzer('Settings test','Critical')">Test Vibration &amp; Buzzer</button></div>
+   </div>
+
+   <div class="card wide">
+    <h2>COLLEGE PROTOTYPE HARDWARE ARCHITECTURE &amp; TECHNICAL REALISM</h2>
+    <div class="accident-dash-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+     <div class="tele-box"><span>Glasses (Lightweight)</span><strong>Camera + Micro HUD</strong><small>Small camera module + compact optical prism + temple piezo buzzer/coin motor. Keeps glasses normal-looking.</small></div>
+     <div class="tele-box"><span>Motorcycle Processing Unit</span><strong>Raspberry Pi / ESP32</strong><small>Mounted under seat or handlebar with rechargeable Li-ion pack to avoid heavy battery on glasses.</small></div>
+     <div class="tele-box"><span>Impact &amp; Positioning</span><strong>MPU6050 + GPS</strong><small>Frame-mounted 6-axis IMU measures impact &amp; tilt; NEO-6M GPS or phone GPS provides speed &amp; coordinates.</small></div>
+     <div class="tele-box"><span>Emergency Link</span><strong>GSM/LTE or Phone</strong><small>SIM800L / A7670 LTE module or Bluetooth smartphone bridge sends SMS/call; 112/108 API requires authorization.</small></div>
+    </div>
+    <div class="notice">Technical Realism: A standalone browser dashboard cannot read an MPU6050 or dispatch an ambulance on its own. Physical deployment requires (1) a sensor acquisition service, (2) valid GPS fix, (3) cellular/internet link, and (4) authorized emergency-service API integration.</div>
+   </div>
+  </div>
+ </section>
+
+ <footer class="smallprint">ROADGUARD AR · UPGRADED ENGINEERING PROTOTYPE · BUILD 2.1 · REALISTIC IN-GLASSES RIDER POV + ACCIDENT RESPONSE</footer>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const pages={
+ overview:'Mobility Safety & Accident Monitoring',
+ vision:'AR Vision Lab · Inside the Glasses',
+ roadai:'Road AI & Impact Engine',
+ emergency:'Accident Detection & Emergency Response',
+ history:'Accident & Impact History',
+ location:'Location, Route Map & Emergency Contacts',
+ settings:'Hardware Bridge & Prototype Settings'
+};
+
+const $=id=>document.getElementById(id);
+let currentPage='overview', coords=null, hardwareSocket=null, hardwareConnected=false;
+let monitoringActive=true, currentSpeed=38, currentDistance=12, currentType='Pothole', currentSeverity='High', currentDim='45 × 10 cm';
+let sosActive=false, countdownTimer=null, countdownSec=0, activeIncident=null, toastTimer=null, camStream=null;
+let statusSteps={suspected:false,gps:false,contact:false,call:false,pending:false,confirmed:false};
+let overviewLensMode='ar'; // 'ar' | 'split' | 'normal'
+let labViewMode='ar';      // 'ar' | 'split' | 'normal'
+
+const DEFAULT_HISTORY=[
+ {id:'INC-101',time:'Demo Sample · Today 08:42 AM',source:'SIMULATED',preSpeed:24,postSpeed:22,deltaV:2,decel:'0.7 m/s²',peakG:2.0,durationMs:80,tiltDeg:5,severity:'MINOR EVENT',gps:'17.38500, 78.48670',notif:'No alert needed (bump)'},
+ {id:'INC-102',time:'Demo Sample · Yesterday 06:15 PM',source:'SIMULATED',preSpeed:34,postSpeed:0,deltaV:34,decel:'5.9 m/s²',peakG:4.8,durationMs:150,tiltDeg:66,severity:'POSSIBLE SERIOUS ACCIDENT',gps:'17.41260, 78.44820',notif:'Cancelled by rider within 15s (SIMULATED)'}
+];
+let accidentHistory=[];
+
+function toast(message){
+ const t=$('toast');t.textContent=message;t.classList.add('show');
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3400);
+}
+
+function goPage(pageId){
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===pageId));
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===pageId));
+ $('pageTitle').textContent=pages[pageId]||pages.overview;
+ currentPage=pageId;
+}
+
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>goPage(b.dataset.page)));
+
+function addEvent(id,msg){
+ const el=$(id);if(!el)return;
+ const d=document.createElement('div');d.className='event';
+ const time=document.createElement('time');time.textContent=new Date().toLocaleTimeString();
+ d.append(time,document.createTextNode(msg));el.prepend(d);
+}
+
+/* ---------- REALISTIC NIGHTTIME MOTORCYCLE IN-GLASSES POV RENDERER ---------- */
+const noiseTile=(()=>{
+ const c=document.createElement('canvas');c.width=96;c.height=96;
+ const g=c.getContext('2d'), img=g.createImageData(96,96);
+ for(let i=0;i<img.data.length;i+=4){
+  const v=14+Math.floor(Math.random()*28);
+  img.data[i]=v;img.data[i+1]=v+2;img.data[i+2]=v+5;img.data[i+3]=42;
+ }
+ g.putImageData(img,0,0);return c;
+})();
+
+let roadPhase=0, lastFrameTs=performance.now();
+
+function cycleOverviewLensMode(){
+ const order=['ar','split','normal'];
+ overviewLensMode=order[(order.indexOf(overviewLensMode)+1)%order.length];
+ const names={ar:'View: RoadGuard AR',split:'View: Split Compare',normal:'View: Normal Night'};
+ $('overviewModeBtn').textContent=names[overviewLensMode];
+ $('visionScene').classList.toggle('split-active',overviewLensMode==='split');
+}
+
+function setLabViewMode(mode){
+ labViewMode=mode;
+ $('labVisionScene').classList.toggle('split-active',mode==='split');
+ $('labModeAr').className='btn'+(mode==='ar'?' primary':'');
+ $('labModeSplit').className='btn'+(mode==='split'?' primary':'');
+ $('labModeNormal').className='btn'+(mode==='normal'?' primary':'');
+}
+
+function drawGlassesPOV(canvas, mode, hazard){
+ if(!canvas)return;
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ const dpr=Math.min(window.devicePixelRatio||1,2);
+ const w=Math.round(rect.width*dpr), h=Math.round(rect.height*dpr);
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+ const ctx=canvas.getContext('2d');
+ ctx.save();
+ ctx.scale(dpr,dpr);
+ const W=rect.width, H=rect.height;
+
+ const renderSide=(useAR)=>{
+  // 1. Night sky & distant horizon
+  const sky=ctx.createLinearGradient(0,0,0,H*0.44);
+  sky.addColorStop(0,'#02050a');sky.addColorStop(0.75,'#09121e');sky.addColorStop(1,'#111f2e');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*0.44);
+
+  // Distant streetlights along highway
+  const vx=W*0.50, vy=H*0.36;
+  for(let i=0;i<7;i++){
+   const t=(i+0.4)/7;
+   const lx=vx-W*(0.06+t*0.34), rx=vx+W*(0.06+t*0.34);
+   const ly=vy-H*0.02-t*H*0.18;
+   const glowL=ctx.createRadialGradient(lx,ly,0,lx,ly,18*t+6);
+   glowL.addColorStop(0,'rgba(170,220,255,0.85)');glowL.addColorStop(1,'rgba(70,130,190,0)');
+   ctx.fillStyle=glowL;ctx.beginPath();ctx.arc(lx,ly,18*t+6,0,Math.PI*2);ctx.fill();
+   const glowR=ctx.createRadialGradient(rx,ly,0,rx,ly,18*t+6);
+   glowR.addColorStop(0,'rgba(170,220,255,0.85)');glowR.addColorStop(1,'rgba(70,130,190,0)');
+   ctx.fillStyle=glowR;ctx.beginPath();ctx.arc(rx,ly,18*t+6,0,Math.PI*2);ctx.fill();
+  }
+
+  // 2. Dark roadside & perspective asphalt surface
+  ctx.fillStyle='#05080d';ctx.fillRect(0,H*0.36,W,H*0.64);
+  const roadGrad=ctx.createLinearGradient(0,vy,0,H);
+  roadGrad.addColorStop(0,'#0d151f');roadGrad.addColorStop(0.45,'#19232f');roadGrad.addColorStop(1,'#0e141c');
+  ctx.fillStyle=roadGrad;
+  ctx.beginPath();
+  ctx.moveTo(vx-W*0.045,vy);ctx.lineTo(vx+W*0.045,vy);
+  ctx.lineTo(W*1.04,H);ctx.lineTo(-W*0.04,H);
+  ctx.closePath();ctx.fill();
+
+  // Asphalt micro-texture overlay
+  ctx.save();
+  ctx.beginPath();ctx.moveTo(vx-W*0.045,vy);ctx.lineTo(vx+W*0.045,vy);ctx.lineTo(W*1.04,H);ctx.lineTo(-W*0.04,H);ctx.closePath();
+  ctx.clip();
+  const pat=ctx.createPattern(noiseTile,'repeat');
+  if(pat){ctx.fillStyle=pat;ctx.fillRect(0,vy,W,H-vy);}
+
+  // Motorcycle headlight beam illuminating asphalt ahead
+  const beam=ctx.createRadialGradient(W*0.5,H*0.92,14,W*0.5,H*0.55,W*0.52);
+  beam.addColorStop(0,useAR?'rgba(185,220,255,0.28)':'rgba(155,180,210,0.16)');
+  beam.addColorStop(0.55,useAR?'rgba(105,155,205,0.13)':'rgba(80,100,130,0.06)');
+  beam.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=beam;ctx.fillRect(0,vy,W,H-vy);
+
+  // Perspective lane lines & scrolling center dashes
+  ctx.strokeStyle='rgba(205,216,226,0.30)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(vx-W*0.036,vy);ctx.lineTo(W*0.09,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(vx+W*0.036,vy);ctx.lineTo(W*0.91,H);ctx.stroke();
+
+  for(let k=0;k<7;k++){
+   const p=((k/7)+roadPhase)%1;
+   const z=Math.pow(p,1.9);
+   const y1=vy+z*(H-vy), y2=vy+Math.pow(Math.min(1,p+0.065),1.9)*(H-vy);
+   const lw=1.2+z*4.5;
+   ctx.fillStyle=`rgba(235,232,200,${0.12+z*0.42})`;
+   ctx.fillRect(vx-lw*0.5,y1,lw,Math.max(2,y2-y1));
+  }
+
+  // 3. Render Pothole / Crack / Obstacle directly on road surface
+  if(hazard.type!=='Road clear'){
+   const normDist=Math.max(0.06,Math.min(1,(hazard.distance-2)/48));
+   const persp=1-Math.pow(normDist,0.58);
+   const hy=vy+(H*0.42)*(0.25+persp*0.72);
+   const hx=W*(0.57+persp*0.05);
+   const rx=(24+persp*48)*(hazard.type==='Road crack'?1.35:1);
+   const ry=(9+persp*20)*(hazard.type==='Stationary obstacle'?1.5:1);
+
+   const arColor=hazard.levelColor;
+   // Warm or critical AR illumination pool on the asphalt (like the uploaded images)
+   if(useAR){
+    const arGlow=ctx.createRadialGradient(hx,hy,rx*0.2,hx,hy,rx*2.2);
+    arGlow.addColorStop(0,hazard.levelName==='CRITICAL'?'rgba(255,95,120,0.48)':'rgba(255,178,68,0.48)');
+    arGlow.addColorStop(0.55,hazard.levelName==='CRITICAL'?'rgba(255,70,100,0.16)':'rgba(255,150,40,0.16)');
+    arGlow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=arGlow;
+    ctx.beginPath();ctx.ellipse(hx,hy,rx*2.2,ry*2.6,0,0,Math.PI*2);ctx.fill();
+   }
+
+   if(hazard.type==='Pothole'){
+    // Outer crumbled rim
+    ctx.fillStyle=useAR?'#3d2c19':'#1b2128';
+    ctx.beginPath();ctx.ellipse(hx,hy,rx*1.12,ry*1.16,-0.06,0,Math.PI*2);ctx.fill();
+    // Deep shadow crater
+    const holeGrad=ctx.createRadialGradient(hx,hy+ry*0.2,rx*0.15,hx,hy,rx);
+    holeGrad.addColorStop(0,'#06080b');holeGrad.addColorStop(0.75,'#14191f');holeGrad.addColorStop(1,useAR?'#6a4b24':'#222931');
+    ctx.fillStyle=holeGrad;
+    ctx.beginPath();ctx.ellipse(hx,hy,rx,ry,-0.06,0,Math.PI*2);ctx.fill();
+   } else if(hazard.type==='Road crack'){
+    ctx.strokeStyle=useAR?'#ffbd59':'#0b0f14';ctx.lineWidth=Math.max(2,2+persp*3);
+    ctx.beginPath();ctx.moveTo(hx-rx,hy+ry*0.4);ctx.lineTo(hx-rx*0.3,hy-ry*0.5);ctx.lineTo(hx+rx*0.2,hy+ry*0.3);ctx.lineTo(hx+rx,hy-ry*0.4);ctx.stroke();
+   } else {
+    // Stationary obstacle / debris block
+    ctx.fillStyle=useAR?'#2c1820':'#161b22';
+    ctx.strokeStyle=useAR?arColor:'#2d3640';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(hx-rx*0.8,hy-ry*1.5,rx*1.6,ry*2.1,5);ctx.fill();ctx.stroke();
+   }
+
+   // RoadGuard ground-projected decision ring (just like Image 2!)
+   if(useAR){
+    ctx.strokeStyle=arColor;ctx.lineWidth=2.5;
+    ctx.shadowColor=arColor;ctx.shadowBlur=14;
+    ctx.beginPath();ctx.ellipse(hx,hy+ry*1.55,rx*1.15,ry*1.05,0,0,Math.PI*2);ctx.stroke();
+    ctx.shadowBlur=0;
+    // Thin leader line & tag inside optical lens
+    ctx.strokeStyle='rgba(255,220,150,0.65)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(hx,hy-ry*1.1);ctx.lineTo(hx+22,hy-ry*2.2-16);ctx.lineTo(hx+112,hy-ry*2.2-16);ctx.stroke();
+    ctx.fillStyle='rgba(10,17,26,0.82)';
+    ctx.fillRect(hx+22,hy-ry*2.2-34,132,18);
+    ctx.strokeStyle=arColor;ctx.strokeRect(hx+22,hy-ry*2.2-34,132,18);
+    ctx.fillStyle='#ffe7b8';ctx.font='bold 10px Inter,sans-serif';
+    ctx.fillText(`${hazard.type.toUpperCase()} · ${hazard.distance}m`,hx+28,hy-ry*2.2-21);
+   }
+  }
+  ctx.restore();
+
+  // 4. Realistic Motorcycle Cockpit Foreground (Handlebars, Mirrors, Glowing Digital Dash)
+  const dashY=H*0.84;
+  // Handlebars
+  ctx.strokeStyle='#0d1219';ctx.lineWidth=14;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(W*0.02,H*0.95);ctx.quadraticCurveTo(W*0.24,H*0.82,W*0.42,H*0.85);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*0.98,H*0.95);ctx.quadraticCurveTo(W*0.76,H*0.82,W*0.58,H*0.85);ctx.stroke();
+  ctx.strokeStyle='#1f2a38';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(W*0.03,H*0.94);ctx.quadraticCurveTo(W*0.24,H*0.81,W*0.42,H*0.84);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*0.97,H*0.94);ctx.quadraticCurveTo(W*0.76,H*0.81,W*0.58,H*0.84);ctx.stroke();
+
+  // Left & right rearview mirrors with subtle nighttime reflections
+  const drawMirror=(mx,my,flip)=>{
+   ctx.save();ctx.translate(mx,my);ctx.scale(flip,1);
+   ctx.strokeStyle='#121821';ctx.lineWidth=4;
+   ctx.beginPath();ctx.moveTo(22,42);ctx.lineTo(8,10);ctx.stroke();
+   ctx.fillStyle='#080d14';ctx.strokeStyle='#243140';ctx.lineWidth=2;
+   ctx.beginPath();ctx.ellipse(0,0,34,20,-0.15,0,Math.PI*2);ctx.fill();ctx.stroke();
+   ctx.fillStyle='rgba(120,190,255,0.55)';ctx.beginPath();ctx.arc(-8,-2,2.2,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='rgba(255,210,140,0.45)';ctx.beginPath();ctx.arc(10,3,1.8,0,Math.PI*2);ctx.fill();
+   ctx.restore();
+  };
+  drawMirror(W*0.09,H*0.70,1);
+  drawMirror(W*0.91,H*0.70,-1);
+
+  // Center digital motorcycle instrument cluster (blue glow like uploaded image)
+  ctx.fillStyle='#070c14';ctx.strokeStyle='#1e2f44';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(W*0.41,dashY-12,W*0.18,54,10);ctx.fill();ctx.stroke();
+  const dashGlow=ctx.createRadialGradient(W*0.5,dashY+15,4,W*0.5,dashY+15,W*0.11);
+  dashGlow.addColorStop(0,'rgba(45,155,255,0.32)');dashGlow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=dashGlow;ctx.fillRect(W*0.41,dashY-12,W*0.18,54);
+  ctx.fillStyle='#8fd8ff';ctx.font='bold 15px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText(String(Math.round(currentSpeed)).padStart(2,'0'),W*0.5,dashY+14);
+  ctx.fillStyle='#5c87b0';ctx.font='8px Inter,sans-serif';
+  ctx.fillText('KM/H · DASH',W*0.5,dashY+27);
+  ctx.textAlign='left';
+ };
+
+ if(mode==='split'){
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W*0.5,H);ctx.clip();renderSide(false);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(W*0.5,0,W*0.5,H);ctx.clip();renderSide(true);ctx.restore();
+  ctx.strokeStyle='rgba(84,216,232,0.75)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(W*0.5,0);ctx.lineTo(W*0.5,H);ctx.stroke();
+ } else {
+  renderSide(mode==='ar');
+ }
+ ctx.restore();
+}
+
+function animateLens(ts){
+ const dt=Math.min(0.05,(ts-lastFrameTs)/1000);lastFrameTs=ts;
+ roadPhase=(roadPhase+(currentSpeed/120)*dt*1.8)%1;
+ const l=levelFor(currentDistance,currentSeverity,currentSpeed);
+ const haz={type:currentType,distance:currentDistance,levelName:l.name,levelColor:l.color};
+ if(currentPage==='overview')drawGlassesPOV($('roadCanvasOverview'),overviewLensMode,haz);
+ if(currentPage==='vision')drawGlassesPOV($('roadCanvasLab'),labViewMode,haz);
+ requestAnimationFrame(animateLens);
+}
+requestAnimationFrame(animateLens);
+
+/* ---------- EXISTING ROADGUARD FEATURES (PRESERVED & UPGRADED) ---------- */
+function levelFor(m,sev,speedKmh){
+ const mps=speedKmh>0?speedKmh/3.6:0;
+ const tth=mps>0?(m/mps):null;
+ if(m<7||sev==='Critical'||(tth!==null&&tth<1.0))return {name:'CRITICAL',color:'#ff667d',score:94,action:'URGENT · BRAKE / AVOID',tth};
+ if(m<=15||sev==='High'||(tth!==null&&tth<2.0))return {name:'HIGH',color:'#ffc45c',score:72,action:'REDUCE SPEED',tth};
+ if(m<=30||sev==='Moderate'||(tth!==null&&tth<3.5))return {name:'MODERATE',color:'#e8d16d',score:46,action:'STAY ALERT',tth};
+ return {name:'LOW',color:'#51d6a0',score:18,action:'MONITOR',tth};
+}
+
+function applyHazard(type,m,sev,dim){
+ currentDistance=m;currentType=type;currentSeverity=sev;currentDim=dim||currentDim;
+ const l=levelFor(m,sev,currentSpeed), label=type.toUpperCase();
+ const tthText=l.tth!==null?l.tth.toFixed(1)+' s':'—';
+ $('visionAlert').style.borderColor=l.color;$('visionAlert').style.color=l.color;
+ $('visionAlert').innerHTML=`<b>⚠ ${label} AHEAD</b><small>${l.name} · ${m} m · TTH ${tthText}</small>`;
+ $('labAlert').style.borderColor=l.color;$('labAlert').style.color=l.color;
+ $('labAlert').innerHTML=`<b>⚠ ${label} AHEAD</b><small>${l.name} · ${m} m · TTH ${tthText}</small>`;
+ $('hudDistance').textContent=`◉ ${m} m · ${currentDim}`;
+ $('hudTth').textContent=`⏱ TTH · ${tthText}`;
+ $('hudAction').textContent='↘ '+l.action;
+ $('labHudDim').textContent='SIZE · '+currentDim;
+ $('labHudTth').textContent='TTH · '+tthText;
+ $('riskMetric').textContent=l.name;$('riskMetric').style.color=l.color;
+ $('riskDesc').textContent=`${type} in forward zone`;
+ $('distanceMetric').textContent=`${m} m · ${tthText}`;
+ $('objectMetric').textContent=`${type} (${currentDim})`;
+ $('riskPercent').textContent=l.score+' / 100';$('riskPercent').style.color=l.color;$('riskBar').style.width=l.score+'%';
+ $('speedValue').innerHTML=`${Math.round(currentSpeed)} <small style="font-size:11px">km/h</small>`;
+ $('labSpeedVal').innerHTML=`${Math.round(currentSpeed)} <small style="font-size:11px">km/h</small>`;
+ $('s1CurrSpeed').textContent=`${Math.round(currentSpeed)} km/h`;
+ addEvent('roadLog',`${type} (${currentDim}) at ${m} m · TTH ${tthText} · ${l.name} warning`);
+ if(l.name==='HIGH'||l.name==='CRITICAL')triggerHapticBuzzer(`${type} ${m}m`,l.name,true);
+}
+
+function simulateHazard(type,m,sev,dim){applyHazard(type,m,sev,dim);toast(`${type} (${dim}) projected inside glasses.`)}
+
+function clearRoad(){
+ currentDistance=45;currentType='Road clear';currentSeverity='Low';currentDim='—';
+ $('visionAlert').style.borderColor='var(--green)';$('visionAlert').style.color='var(--green)';
+ $('visionAlert').innerHTML='<b>✓ ROAD CLEAR</b><small>NO HAZARD IN ALERT ZONE</small>';
+ $('labAlert').style.borderColor='var(--green)';$('labAlert').style.color='var(--green)';
+ $('labAlert').innerHTML='<b>✓ ROAD CLEAR</b><small>NO HAZARD IN ALERT ZONE</small>';
+ $('riskMetric').textContent='LOW';$('riskMetric').style.color='var(--green)';
+ $('riskDesc').textContent='No road hazard flagged';$('distanceMetric').textContent='—';$('objectMetric').textContent='Clear lane';
+ $('riskPercent').textContent='8 / 100';$('riskPercent').style.color='var(--green)';$('riskBar').style.width='8%';
+ $('hudDistance').textContent='✓ ROAD CLEAR';$('hudTth').textContent='⏱ TTH · —';$('hudAction').textContent='CONTINUE SCAN';
+ addEvent('roadLog','Road clear · forward scan continues');toast('Road clear active.');
+}
+
+function runLab(){
+ const type=$('labType').value, m=Number($('labDistance').value), sev=$('labSeverity').value, dim=$('labDim').value;
+ currentSpeed=Number($('labSpeedRange').value);
+ applyHazard(type,m,sev,dim);
+ toast('AR Vision Lab scenario updated.');
+}
+
+$('labDistance').addEventListener('input',e=>$('labDistLabel').textContent=e.target.value+' metres');
+$('labSpeedRange').addEventListener('input',e=>{$('labSpeedLabel').textContent=e.target.value+' km/h';});
+$('labDim').addEventListener('change',e=>$('labDimLabel').textContent=e.target.value+' (W × D)');
+$('damageRange').addEventListener('input',e=>$('damageLabel').textContent=e.target.value+' cm');
+$('confidenceRange').addEventListener('input',e=>$('confidenceLabel').textContent=e.target.value+'% minimum');
+
+function triggerHapticBuzzer(reason,level,quietToast){
+ const mode=$('buzzerMode').value;
+ if(mode==='off'){
+  $('hapticMetric').textContent='MUTED';$('hapticMetric').className='warn';
+  if(!quietToast)toast('Haptic/buzzer muted in Settings.');
+  return;
+ }
+ if(navigator.vibrate){navigator.vibrate(level==='CRITICAL'||level==='Critical'?[180,80,180]:[100]);}
+ if(mode==='on'){
+  try{
+   const ctx=new (window.AudioContext||window.webkitAudioContext)();
+   const osc=ctx.createOscillator(), gain=ctx.createGain();
+   osc.type='square';osc.frequency.value=(level==='CRITICAL'||level==='Critical')?880:620;
+   gain.gain.value=0.04;osc.connect(gain);gain.connect(ctx.destination);
+   osc.start();setTimeout(()=>{osc.stop();ctx.close();},140);
+  }catch(_){}
+ }
+ $('hapticMetric').textContent='TRIGGERED';$('hapticMetric').className=(level==='CRITICAL'||level==='Critical')?'bad':'warn';
+ $('hapticDesc').textContent=reason;
+ $('hudHaptic').textContent='⚡ ALERT: '+level.toUpperCase();
+ setTimeout(()=>{
+  $('hapticMetric').textContent='ARMED';$('hapticMetric').className='good';
+  $('hapticDesc').textContent='Glasses temple module';$('hudHaptic').textContent='⚡ HAPTIC · ARMED';
+ },1800);
+ if(!quietToast)toast(`Vibration/buzzer triggered (${reason}).`);
+}
+
+async function toggleLiveCamera(){
+ const v=$('liveCamVideo'), box=$('visionScene'), badge=$('camStateBadge');
+ if(camStream){
+  camStream.getTracks().forEach(t=>t.stop());camStream=null;
+  box.classList.remove('cam-on');badge.textContent='SIMULATED POV';badge.className='state-badge sim';
+  $('hudSourceLabel').textContent='RIDER POV · NIGHT SCAN (SIMULATED)';
+  toast('Switched back to simulated glasses POV.');return;
+ }
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+  badge.textContent='CAMERA UNAVAILABLE';badge.className='state-badge unavail';
+  toast('Camera API unavailable in this browser.');return;
+ }
+ try{
+  camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+  v.srcObject=camStream;box.classList.add('cam-on');
+  badge.textContent='LIVE WEBCAM';badge.className='state-badge hw';
+  $('hudSourceLabel').textContent='RIDER POV · LIVE CAMERA';
+  toast('Live camera feed overlaid inside glasses.');
+ }catch(err){
+  badge.textContent='CAM UNAVAILABLE';badge.className='state-badge unavail';
+  toast('Camera unavailable or permission denied: '+err.message);
+ }
+}
+
+function simulateRoadImpact(){
+ const peak=2.4, az=2.25;
+ $('imuAccelVec').textContent='0.35 / -0.21 / '+az.toFixed(2);
+ $('imuResultant').textContent=peak.toFixed(2)+' g';
+ $('imuTilt').textContent='8°';$('imuGyro').textContent='38 °/s';
+ $('lastBumpSummary').textContent=`Last road impact: ${peak.toFixed(2)} g (pothole hit · SIMULATED)`;
+ $('s1VertAcc').textContent=az.toFixed(2)+' g';$('s1Impact').textContent=peak.toFixed(2)+' g';
+ addEvent('roadLog',`MPU6050 road bump recorded: ${peak.toFixed(2)} g (Az ${az.toFixed(2)} g · SIMULATED)`);
+ toast('Sample MPU6050 road bump recorded.');
+}
+
+/* ---------- SCREEN 1 & 2: MULTI-SENSOR ACCIDENT DETECTION ENGINE ---------- */
+function toggleAccidentMonitoring(){
+ monitoringActive=!monitoringActive;
+ $('toggleMonitorBtn').textContent='Monitoring: '+(monitoringActive?'ACTIVE':'INACTIVE');
+ $('s1MonitorState').textContent=monitoringActive?'ACTIVE':'INACTIVE';
+ $('s1MonitorState').className=monitoringActive?'good':'bad';
+ $('s1MonitorSub').textContent=monitoringActive?'Multi-sensor watch on':'Detection paused by user';
+ updateTopPill();
+ toast('Accident monitoring set to '+(monitoringActive?'ACTIVE':'INACTIVE')+'.');
+}
+
+function evaluateAccidentEvent(sample){
+ if(!monitoringActive){
+  toast('Accident monitoring is INACTIVE. Enable monitoring first.');return null;
+ }
+ const vPre=sample.vPre, vPost=sample.vPost;
+ const deltaV=(vPost!==null && vPost!==undefined)?Math.max(0,vPre-vPost):null;
+ const decel=(deltaV!==null && sample.dtSec && sample.dtSec>0.05)?((deltaV/3.6)/sample.dtSec):null;
+ const peakG=sample.peakG, dur=sample.durationMs, tilt=sample.tiltDeg, gyro=sample.gyroDps, inact=sample.inactivitySec;
+
+ const isBriefSpike = dur < 55 && tilt < 30 && (deltaV===null || deltaV < 10) && (inact===null || inact < 3);
+ const fallDetected = tilt >= 55 || gyro >= 220;
+ const majorSpeedDrop = (deltaV!==null && deltaV >= 25) || (decel!==null && decel >= 8.0);
+ const modSpeedDrop = (deltaV!==null && deltaV >= 12) || (decel!==null && decel >= 5.0);
+ const inactiveFlag = inact !== null && inact >= 8;
+
+ let severity='MINOR EVENT', reason='Low-energy bump; normal riding posture preserved';
+ if(isBriefSpike){
+  severity='MINOR EVENT';
+  reason='Brief spike (<55 ms) without fall or speed drop — flagged as pothole/handling review';
+ } else if(peakG >= 6.5 && fallDetected && majorSpeedDrop && dur >= 70){
+  severity='SEVERE ACCIDENT';
+  reason='High impact + fall orientation + major speed drop/deceleration'+(inactiveFlag?' + rider inactivity':'');
+ } else if((peakG >= 3.5 && fallDetected) || (peakG >= 4.0 && modSpeedDrop) || (fallDetected && inactiveFlag)){
+  severity='POSSIBLE SERIOUS ACCIDENT';
+  reason='Moderate impact combined with possible fall / speed drop'+(inactiveFlag?' and inactivity':'');
+ }
+
+ const result={
+  id:'INC-'+Math.floor(100+Math.random()*900),
+  time:new Date().toLocaleString(),
+  source:sample.isSimulated?'SIMULATED':'HARDWARE',
+  label:sample.label,
+  vPre,vPost,deltaV,decel,dtSec:sample.dtSec,peakG,verticalG:sample.verticalG,
+  durationMs:dur,tiltDeg:tilt,gyroDps:gyro,inactivitySec:inact,
+  fallDetected,severity,reason
+ };
+ renderTelemetryAndCalculations(result);
+ return result;
+}
+
+function renderTelemetryAndCalculations(r){
+ const srcText=r.source;
+ $('s1CurrSpeed').textContent=(r.vPost!==null?r.vPost:r.vPre)+' km/h';
+ $('s1SpeedSource').textContent=srcText;
+ $('s1PreSpeed').textContent=r.vPre+' km/h';
+ $('s1Decel').textContent=r.decel!==null?r.decel.toFixed(1)+' m/s²':'N/A';
+ $('s1DecelSub').textContent=r.decel!==null?`Over Δt=${r.dtSec}s`:'Insufficient Δt';
+ $('s1VertAcc').textContent=r.verticalG.toFixed(2)+' g';
+ $('s1Impact').textContent=r.peakG.toFixed(2)+' g';
+ $('s1ImpactBand').textContent=r.peakG>=6.5?'High impact peak':r.peakG>=3.5?'Moderate impact peak':'Minor bump';
+ $('s1FallState').textContent=r.fallDetected?`POSSIBLE FALL (${r.tiltDeg}°)`:`NO FALL (${r.tiltDeg}°)`;
+ $('s1FallState').className=r.fallDetected?'bad':'good';
+ $('s1Inactivity').textContent=r.inactivitySec>=8?`INACTIVE (${r.inactivitySec}s)`:'ACTIVE';
+ $('s1Inactivity').className=r.inactivitySec>=8?'bad':'good';
+ $('s1InactivitySub').textContent=r.inactivitySec!==null?`Observed ${r.inactivitySec}s post-event (${srcText})`:'Sensor unavailable';
+ $('s1DetectStatus').textContent=r.severity;
+ $('s1DetectStatus').className=r.severity==='SEVERE ACCIDENT'?'bad':r.severity==='POSSIBLE SERIOUS ACCIDENT'?'warn':'good';
+ $('s1DetectSub').textContent=r.label;
+
+ $('imuAccelVec').textContent=`${(r.peakG*0.45).toFixed(2)} / ${(r.peakG*0.35).toFixed(2)} / ${r.verticalG.toFixed(2)}`;
+ $('imuResultant').textContent=r.peakG.toFixed(2)+' g';
+ $('imuTilt').textContent=r.tiltDeg+'°';
+ $('imuGyro').textContent=r.gyroDps+' °/s';
+
+ $('cPreSpeed').textContent=r.vPre+' km/h';
+ $('cPostSpeed').textContent=r.vPost!==null?r.vPost+' km/h':'Unavailable';
+ $('cDeltaV').textContent=r.deltaV!==null?r.deltaV+' km/h':'Unavailable';
+ $('cDecel').textContent=r.decel!==null?r.decel.toFixed(1)+' m/s²':'Insufficient Δt';
+ $('cDecelNote').textContent=r.decel!==null?`Δv=${r.deltaV} km/h over ${r.dtSec}s`:'No valid time interval';
+ $('cPeakG').textContent=r.peakG.toFixed(2)+' g';
+ $('cDuration').textContent=r.durationMs+' ms';
+ $('cTiltInact').textContent=`${r.tiltDeg}° · ${r.inactivitySec!==null?r.inactivitySec+'s still':'N/A'}`;
+ $('cSeverity').textContent=r.severity;
+ $('cSeverity').className=r.severity==='SEVERE ACCIDENT'?'bad':r.severity==='POSSIBLE SERIOUS ACCIDENT'?'warn':'good';
+ $('cReason').textContent=r.reason;
+
+ $('tierMinor').className='tier'+(r.severity==='MINOR EVENT'?' active-minor':'');
+ $('tierPossible').className='tier'+(r.severity==='POSSIBLE SERIOUS ACCIDENT'?' active-possible':'');
+ $('tierSevere').className='tier'+(r.severity==='SEVERE ACCIDENT'?' active-severe':'');
+}
+
+/* ---------- SCREEN 3 & 4: AUTOMATIC EMERGENCY RESPONSE ---------- */
+function setGlassesCrashHUD(show,sub){
+ $('hudCrashOverview').classList.toggle('show',show);
+ $('hudCrashLab').classList.toggle('show',show);
+ if(sub){
+  $('hudCrashOverviewSub').textContent=sub;
+  $('hudCrashLabSub').textContent=sub;
+ }
+}
+
+function handleAccidentWorkflow(r){
+ if(!r)return;
+ activeIncident=r;
+ if(r.severity==='MINOR EVENT'){
+  resetEmergencyWorkflow(true);
+  recordIncidentToHistory(r,'No automatic emergency notification');
+  addEvent('emergencyLog',`${r.label}: classified MINOR EVENT (${r.reason}) · No SOS triggered (${r.source})`);
+  toast(`${r.severity}: No emergency notification needed.`);
+  return;
+ }
+
+ sosActive=true;
+ clearInterval(countdownTimer);
+ statusSteps={suspected:true,gps:false,contact:false,call:false,pending:false,confirmed:false};
+
+ if(navigator.geolocation && $('gpsPermission').value==='Enabled' && !coords){
+  navigator.geolocation.getCurrentPosition(p=>{
+   coords={lat:p.coords.latitude,lon:p.coords.longitude,acc:Math.round(p.coords.accuracy)};
+   updateGpsDisplay();
+   if(activeIncident){statusSteps.gps=true;renderEmergencyStatus();updatePacketPreview(activeIncident);}
+  },()=>{renderEmergencyStatus();},{enableHighAccuracy:true,timeout:4000});
+ }
+ if(coords && $('gpsPermission').value==='Enabled'){statusSteps.gps=true;}
+
+ $('globalEmergencyBanner').classList.add('show');
+ $('navEmergencyBtn').classList.add('alert-nav');
+ $('respHeadline').textContent='⚠ ACCIDENT DETECTED — CHECK RIDER STATUS';
+ $('respHeadline').style.color='#ffd0d8';
+ $('s4Time').textContent=r.time;
+ updateTopPill();
+ triggerHapticBuzzer(r.severity,'Critical',true);
+
+ if(r.severity==='SEVERE ACCIDENT'){
+  $('cancelWindowBox').style.display='none';
+  const msg=`SEVERE ACCIDENT (${r.source}) · Immediate SOS workflow`;
+  setGlassesCrashHUD(true,msg);
+  $('bannerSub').textContent=`SEVERE ACCIDENT (${r.source}) · Pre-speed ${r.vPre} km/h · Peak ${r.peakG} g · Immediate emergency workflow started.`;
+  $('respSub').textContent='Severe event detected: emergency notification initiated immediately without delay.';
+  executeNotificationSequence(r,'Immediate severe-event workflow');
+ } else {
+  countdownSec=15;
+  $('cancelWindowBox').style.display='block';
+  $('countdownText').textContent=countdownSec+' s';
+  setGlassesCrashHUD(true,`Possible serious crash · Check-in ${countdownSec} s`);
+  $('bannerSub').textContent=`POSSIBLE SERIOUS ACCIDENT (${r.source}) · Check rider status · Notifying in ${countdownSec} s unless cancelled.`;
+  $('respSub').textContent='Possible serious accident suspected. Waiting 15s for rider cancellation before notifying contact.';
+  renderEmergencyStatus();
+  updatePacketPreview(r);
+  countdownTimer=setInterval(()=>{
+   countdownSec--;
+   $('countdownText').textContent=countdownSec+' s';
+   setGlassesCrashHUD(true,`Possible serious crash · Check-in ${countdownSec} s`);
+   $('bannerSub').textContent=`POSSIBLE SERIOUS ACCIDENT (${r.source}) · Check rider status · Notifying in ${countdownSec} s unless cancelled.`;
+   if(countdownSec<=0){
+    clearInterval(countdownTimer);
+    $('cancelWindowBox').style.display='none';
+    setGlassesCrashHUD(true,'No rider response · Contact notified');
+    executeNotificationSequence(r,'No rider response after 15s');
+   }
+  },1000);
+ }
+}
+
+function executeNotificationSequence(r,triggerReason){
+ const c=getConfiguredContact();
+ const isSimMode=(!hardwareConnected || $('commMethod').value==='Simulated Demo Notification');
+ statusSteps.contact=true;
+ statusSteps.pending=true;
+ const notifSummary=(isSimMode?'Contact notified [SIMULATED]':'Bridge dispatch requested')+(coords?' + GPS':' (No GPS)');
+ renderEmergencyStatus();
+ updatePacketPreview(r);
+ recordIncidentToHistory(r,notifSummary);
+ addEvent('emergencyLog',`${r.severity}: ${triggerReason}. Packet prepared for ${c.primaryName} (${notifSummary}).`);
+ toast(`${r.severity}: Emergency contact notification workflow executed (${isSimMode?'SIMULATED':'BRIDGE'}).`);
+}
+
+function confirmRiderSafe(){
+ clearInterval(countdownTimer);sosActive=false;
+ $('globalEmergencyBanner').classList.remove('show');
+ $('navEmergencyBtn').classList.remove('alert-nav');
+ $('cancelWindowBox').style.display='none';
+ setGlassesCrashHUD(false,'');
+ $('respHeadline').textContent='Standby · Rider Confirmed Safe';
+ $('respHeadline').style.color='var(--green)';
+ $('respSub').textContent='Alert cancelled by rider. Normal monitoring resumed.';
+ if(activeIncident){
+  recordIncidentToHistory(activeIncident,'Cancelled by rider — Safe');
+  activeIncident=null;
+ }
+ resetEmergencyWorkflow(true);
+ updateTopPill();
+ addEvent('emergencyLog','Rider confirmed safe · emergency workflow cancelled.');
+ toast('Rider confirmed safe. Alert cancelled.');
+}
+
+function escalateNow(){
+ clearInterval(countdownTimer);
+ $('cancelWindowBox').style.display='none';
+ if(!activeIncident){
+  activeIncident=evaluateAccidentEvent({
+   label:'Manual SOS Trigger',vPre:Math.round(currentSpeed),vPost:0,dtSec:1.0,
+   peakG:5.5,verticalG:3.0,durationMs:160,tiltDeg:65,gyroDps:180,inactivitySec:10,isSimulated:!hardwareConnected
+  });
+ }
+ sosActive=true;
+ $('globalEmergencyBanner').classList.add('show');
+ $('navEmergencyBtn').classList.add('alert-nav');
+ setGlassesCrashHUD(true,'Manual / Immediate SOS active');
+ $('respHeadline').textContent='⚠ ACCIDENT DETECTED — CHECK RIDER STATUS';
+ $('bannerSub').textContent='Manual / immediate SOS escalation active.';
+ statusSteps.suspected=true;
+ if(coords && $('gpsPermission').value==='Enabled')statusSteps.gps=true;
+ executeNotificationSequence(activeIncident,'Manual / Immediate Escalation');
+ updateTopPill();
+}
+
+function initiateEmergencyCall(num){
+ if(!activeIncident){
+  toast(`Run a scenario or escalate first, or use "Phone Dialer: tel:${num}" for direct phone calling.`);
+  return;
+ }
+ statusSteps.call=true;statusSteps.pending=true;
+ renderEmergencyStatus();
+ const modeTag=hardwareConnected?'GSM/BRIDGE':'SIMULATED';
+ addEvent('emergencyLog',`Emergency call to ${num} initiated (${modeTag}). Authorized API required for automatic dispatch confirmation.`);
+ toast(`Call to ${num} marked initiated (${modeTag}).`);
+}
+
+function confirmRealCall(num){
+ return confirm(`Open your device phone dialer to call emergency number ${num}? Cancel if this is only a classroom demonstration.`);
+}
+
+function markAssistanceConfirmed(){
+ if(!statusSteps.suspected){toast('Trigger an emergency workflow first.');return;}
+ statusSteps.confirmed=true;
+ renderEmergencyStatus();
+ addEvent('emergencyLog','Assistance status manually marked CONFIRMED (SIMULATED demo step).');
+ toast('Assistance confirmed (SIMULATED).');
+}
+
+function resetEmergencyWorkflow(silent){
+ clearInterval(countdownTimer);sosActive=false;
+ statusSteps={suspected:false,gps:false,contact:false,call:false,pending:false,confirmed:false};
+ $('globalEmergencyBanner').classList.remove('show');
+ $('navEmergencyBtn').classList.remove('alert-nav');
+ $('cancelWindowBox').style.display='none';
+ setGlassesCrashHUD(false,'');
+ $('respHeadline').textContent='Standby · Monitoring Rider Status';
+ $('respHeadline').style.color='var(--text)';
+ $('respSub').textContent='When a serious accident is detected, RoadGuard locks GPS, checks rider status inside the glasses & phone console, alerts the configured emergency contact, and provides 112 / 108 emergency call options.';
+ renderEmergencyStatus();
+ updateTopPill();
+ if(!silent)toast('Emergency status panel reset.');
+}
+
+function renderEmergencyStatus(){
+ const tag=hardwareConnected?'':' [SIMULATED]';
+ const c=getConfiguredContact();
+ $('s4Contact').textContent=c.primaryName+(c.primaryPhone?' · '+c.primaryPhone:'');
+ if(coords && $('gpsPermission').value==='Enabled'){
+  const cs=`${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}`;
+  $('s4Coords').textContent=cs;
+  $('s4MapLink').href=`https://www.google.com/maps?q=${coords.lat},${coords.lon}`;
+  $('s4MapLink').style.display='inline';$('s4MapDisabled').style.display='none';
+ } else {
+  $('s4Coords').textContent=$('gpsPermission').value==='Disabled'?'Sharing disabled':'Unavailable';
+  $('s4MapLink').style.display='none';$('s4MapDisabled').style.display='inline';
+  $('s4MapDisabled').textContent=$('gpsPermission').value==='Disabled'?'GPS sharing disabled in Settings':'Acquire GPS first';
+ }
+
+ const setStep=(idx,active,text,isRed)=>{
+  const el=document.querySelector(`.step-item[data-step="${idx}"]`);
+  el.className='step-item '+(active?(isRed?'active-red':'done'):'pending');
+  $('st'+idx).textContent=text;
+ };
+ setStep(0,statusSteps.suspected,statusSteps.suspected?'ACTIVE'+tag:'IDLE',true);
+ setStep(1,statusSteps.gps,statusSteps.gps?'ACQUIRED':'UNAVAILABLE',false);
+ setStep(2,statusSteps.contact,statusSteps.contact?'NOTIFIED'+tag:'PENDING',false);
+ setStep(3,statusSteps.call,statusSteps.call?'INITIATED'+tag:'PENDING',false);
+ setStep(4,statusSteps.pending,statusSteps.pending?'PENDING'+tag:'NOT ACTIVE',false);
+ setStep(5,statusSteps.confirmed,statusSteps.confirmed?'CONFIRMED (DEMO)':'UNCONFIRMED',false);
+}
+
+function updatePacketPreview(r){
+ const c=getConfiguredContact();
+ $('pktRider').textContent=c.riderId;
+ $('pktTime').textContent=r?r.time:'—';
+ $('pktSpeedSev').textContent=r?`${r.vPre} km/h · ${r.severity}`:'—';
+ $('pktContact').textContent=c.primaryName+(c.primaryPhone?' ('+c.primaryPhone+')':'');
+ if(coords && $('gpsPermission').value==='Enabled'){
+  const url=`https://maps.google.com/?q=${coords.lat.toFixed(6)},${coords.lon.toFixed(6)}`;
+  $('pktMap').innerHTML=`${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)} · <a href="${url}" target="_blank" rel="noopener">Maps ↗</a>`;
+ } else {
+  $('pktMap').textContent=$('gpsPermission').value==='Disabled'?'Permission disabled':'GPS unavailable';
+ }
+}
+
+/* ---------- SCREEN 6: TEST SCENARIOS A-D (ALL SIMULATED) ---------- */
+function runScenario(code){
+ let sample=null;
+ if(code==='A')sample={label:'Scenario A: Small road bump at low speed',vPre:22,vPost:20,dtSec:0.8,peakG:2.1,verticalG:1.95,durationMs:85,tiltDeg:6,gyroDps:28,inactivitySec:0,isSimulated:true};
+ if(code==='B')sample={label:'Scenario B: Moderate impact + possible fall',vPre:36,vPost:4,dtSec:1.6,peakG:4.6,verticalG:2.85,durationMs:140,tiltDeg:68,gyroDps:210,inactivitySec:9,isSimulated:true};
+ if(code==='C')sample={label:'Scenario C: High-speed collision + fall motion',vPre:68,vPost:0,dtSec:1.2,peakG:8.4,verticalG:4.90,durationMs:210,tiltDeg:82,gyroDps:360,inactivitySec:18,isSimulated:true};
+ if(code==='D')sample={label:'Scenario D: False impact (pothole / handling)',vPre:28,vPost:26,dtSec:0.5,peakG:4.2,verticalG:3.90,durationMs:35,tiltDeg:11,gyroDps:65,inactivitySec:0,isSimulated:true};
+ currentSpeed=sample.vPost;
+ $('speedValue').innerHTML=`${currentSpeed} <small style="font-size:11px">km/h</small>`;
+ $('labSpeedVal').innerHTML=`${currentSpeed} <small style="font-size:11px">km/h</small>`;
+ const res=evaluateAccidentEvent(sample);
+ if(res)handleAccidentWorkflow(res);
+}
+
+/* ---------- SCREEN 5: ACCIDENT HISTORY ---------- */
+function loadHistory(){
+ try{
+  const raw=localStorage.getItem('roadguard_history_v2');
+  accidentHistory=raw?JSON.parse(raw):[...DEFAULT_HISTORY];
+ }catch(_){accidentHistory=[...DEFAULT_HISTORY];}
+ renderHistory();
+}
+
+function recordIncidentToHistory(r,notifStatus){
+ const entry={
+  id:r.id,time:r.time,source:r.source,label:r.label,
+  preSpeed:r.vPre,postSpeed:r.vPost,deltaV:r.deltaV,
+  decel:r.decel!==null?r.decel.toFixed(1)+' m/s²':'N/A',
+  peakG:Number(r.peakG.toFixed(2)),durationMs:r.durationMs,tiltDeg:r.tiltDeg,
+  severity:r.severity,reason:r.reason,
+  gps:(coords && $('gpsPermission').value==='Enabled')?`${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}`:'Unavailable',
+  notif:notifStatus
+ };
+ const idx=accidentHistory.findIndex(x=>x.id===entry.id);
+ if(idx>=0)accidentHistory[idx]=entry; else accidentHistory.unshift(entry);
+ try{localStorage.setItem('roadguard_history_v2',JSON.stringify(accidentHistory.slice(0,30)));}catch(_){}
+ renderHistory();
+}
+
+function renderHistory(){
+ const tb=$('historyBody');tb.innerHTML='';
+ if(!accidentHistory.length){
+  tb.innerHTML='<tr><td colspan="7" class="sub">No incidents recorded yet.</td></tr>';return;
+ }
+ accidentHistory.forEach((h,i)=>{
+  const tr=document.createElement('tr');tr.style.cursor='pointer';
+  const sevCls=h.severity==='SEVERE ACCIDENT'?'bad':h.severity==='POSSIBLE SERIOUS ACCIDENT'?'warn':'good';
+  tr.innerHTML=`<td>${h.time}</td><td><span class="state-badge ${h.source==='HARDWARE'?'hw':'sim'}">${h.source}</span></td><td>${h.preSpeed} km/h</td><td>${h.peakG} g</td><td class="${sevCls}"><b>${h.severity}</b></td><td>${h.gps}</td><td>${h.notif}</td>`;
+  tr.addEventListener('click',()=>showHistoryDetail(i));
+  tb.appendChild(tr);
+ });
+}
+
+function showHistoryDetail(i){
+ const h=accidentHistory[i];if(!h)return;
+ $('histDetTitle').textContent=`${h.id} · ${h.time} (${h.source})`;
+ $('histDetBody').innerHTML=`<b>Event:</b> ${h.label||'Recorded event'}<br><b>Speed:</b> ${h.preSpeed} km/h → ${h.postSpeed??'—'} km/h (Δv ${h.deltaV??'—'} km/h · Decel ${h.decel})<br><b>MPU6050:</b> Peak ${h.peakG} g · Duration ${h.durationMs??'—'} ms · Tilt ${h.tiltDeg??'—'}°<br><b>GPS:</b> ${h.gps}<br><b>Severity:</b> ${h.severity} (${h.reason||'Multi-factor evaluation'})<br><b>Notification:</b> ${h.notif}`;
+}
+
+function clearHistory(){
+ accidentHistory=[];localStorage.removeItem('roadguard_history_v2');renderHistory();
+ $('histDetTitle').textContent='History cleared';$('histDetBody').textContent='No incident selected.';
+ toast('Accident history cleared.');
+}
+
+function exportHistoryJson(){
+ const blob=new Blob([JSON.stringify(accidentHistory,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='roadguard_accident_history.json';a.click();
+ toast('Incident history exported as JSON.');
+}
+
+/* ---------- GPS & SCREEN 7 CONTACTS ---------- */
+function getLocation(){
+ if(!navigator.geolocation){
+  $('gpsBadge').textContent='GPS UNAVAILABLE';$('gpsBadge').className='state-badge unavail';
+  toast('Geolocation is not supported by this browser.');return;
+ }
+ $('locationText').textContent='Requesting browser location permission…';
+ navigator.geolocation.getCurrentPosition(p=>{
+  coords={lat:p.coords.latitude,lon:p.coords.longitude,acc:Math.round(p.coords.accuracy)};
+  updateGpsDisplay();
+  toast('Live GPS coordinates acquired.');
+ },err=>{
+  $('gpsBadge').textContent='GPS UNAVAILABLE';$('gpsBadge').className='state-badge unavail';
+  $('locationText').textContent='Location unavailable: '+err.message;
+  $('gpsShortMetric').textContent='UNAVAILABLE';$('gpsShortMetric').className='bad';
+  $('s1Gps').textContent='UNAVAILABLE';$('s1GpsAcc').textContent=err.message;
+  toast('Location permission denied or unavailable.');
+ },{enableHighAccuracy:true,timeout:10000});
+}
+
+function updateGpsDisplay(){
+ if(!coords)return;
+ const s=`${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}`;
+ $('gpsBadge').textContent='GPS ACTIVE';$('gpsBadge').className='state-badge hw';
+ $('locationText').textContent=`Live Coordinates: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)} · Accuracy ±${coords.acc} m`;
+ $('mapRiderLabel').textContent=`Rider GPS: ${s}`;
+ $('gpsShortMetric').textContent='ACQUIRED';$('gpsShortMetric').className='good';
+ $('gpsShortDesc').textContent=`±${coords.acc} m accuracy`;
+ $('s1Gps').textContent=s;$('s1GpsAcc').textContent=`Accuracy ±${coords.acc} m`;
+ $('openGoogleMapBtn').href=`https://maps.google.com/?q=${coords.lat},${coords.lon}`;
+ if(activeIncident){statusSteps.gps=true;renderEmergencyStatus();updatePacketPreview(activeIncident);}
+}
+
+function copyLocation(){
+ if(!coords){toast('Acquire GPS coordinates first.');return;}
+ const s=`${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('Coordinates copied: '+s));
+ else toast(s);
+}
+
+function checkMapLink(){
+ if(!coords){toast('Acquire GPS coordinates first to open Google Maps.');return false;}
+ return true;
+}
+
+function getConfiguredContact(){
+ return {
+  riderId:$('riderIdInput').value.trim()||'Vardan (RG-RIDER-01)',
+  primaryName:$('contactName').value.trim()||'Emergency Contact (Not Set)',
+  primaryPhone:$('contactPhone').value.trim(),
+  secondary:$('secondaryContact').value.trim(),
+  method:$('commMethod').value,
+  gpsPerm:$('gpsPermission').value
+ };
+}
+
+function saveContact(){
+ const c=getConfiguredContact();
+ try{localStorage.setItem('roadguard_contact_v2',JSON.stringify(c));}catch(_){}
+ $('contactStatus').textContent=`Saved locally: ${c.riderId} → ${c.primaryName} ${c.primaryPhone} · Method: ${c.method} · GPS Sharing: ${c.gpsPerm}`;
+ updatePacketPreview(activeIncident);renderEmergencyStatus();
+ toast('Emergency contact settings saved.');
+}
+
+function loadContact(){
+ try{
+  const raw=localStorage.getItem('roadguard_contact_v2');
+  if(!raw)return;
+  const c=JSON.parse(raw);
+  if(c.riderId)$('riderIdInput').value=c.riderId;
+  if(c.primaryName && c.primaryName!=='Emergency Contact (Not Set)')$('contactName').value=c.primaryName;
+  if(c.primaryPhone)$('contactPhone').value=c.primaryPhone;
+  if(c.secondary)$('secondaryContact').value=c.secondary;
+  if(c.method)$('commMethod').value=c.method;
+  if(c.gpsPerm)$('gpsPermission').value=c.gpsPerm;
+  $('contactStatus').textContent=`Loaded saved settings: ${c.riderId} → ${c.primaryName} ${c.primaryPhone}`;
+ }catch(_){}
+}
+
+/* ---------- HARDWARE BRIDGE (RASPBERRY PI / ESP32 WEBSOCKET) ---------- */
+function connectHardwareBridge(){
+ const url=$('wsUrlInput').value.trim();
+ if(!url){toast('Enter a WebSocket URL (e.g. ws://localhost:8765).');return;}
+ if(hardwareSocket){hardwareSocket.close();hardwareSocket=null;}
+ toast('Attempting connection to '+url+'…');
+ try{
+  const ws=new WebSocket(url);
+  ws.onopen=()=>{
+   hardwareSocket=ws;hardwareConnected=true;
+   updateHardwareBadges('HARDWARE CONNECTED','hw');
+   toast('Hardware bridge connected: receiving live telemetry.');
+  };
+  ws.onmessage=ev=>{
+   try{
+    const d=JSON.parse(ev.data);
+    if(typeof d.speedKmh==='number'){
+     currentSpeed=d.speedKmh;
+     $('speedValue').innerHTML=`${Math.round(currentSpeed)} <small style="font-size:11px">km/h</small>`;
+     $('labSpeedVal').innerHTML=`${Math.round(currentSpeed)} <small style="font-size:11px">km/h</small>`;
+    }
+    if(d.gps && typeof d.gps.lat==='number'){coords={lat:d.gps.lat,lon:d.gps.lon,acc:d.gps.acc||10};updateGpsDisplay();}
+    const peak=Math.sqrt((d.ax||0)**2+(d.ay||0)**2+(d.az||1)**2);
+    const tilt=d.tiltDeg||0;
+    if(peak>=2.0 || tilt>=45){
+     const res=evaluateAccidentEvent({
+      label:'Hardware MPU6050 Event',vPre:d.vPre||Math.round(currentSpeed),vPost:Math.round(currentSpeed),
+      dtSec:d.dtSec||1.0,peakG:peak,verticalG:Math.abs(d.az||1),durationMs:d.durationMs||90,
+      tiltDeg:tilt,gyroDps:d.gyroDps||0,inactivitySec:d.inactivitySec||0,isSimulated:false
+     });
+     if(res)handleAccidentWorkflow(res);
+    }
+   }catch(_){}
+  };
+  ws.onerror=()=>{
+   hardwareConnected=false;
+   updateHardwareBadges('BRIDGE UNAVAILABLE','unavail');
+   toast('Hardware bridge unavailable at '+url+'. Remaining in safe state.');
+  };
+  ws.onclose=()=>{
+   if(hardwareConnected){hardwareConnected=false;updateHardwareBadges('SIMULATION MODE','sim');toast('Hardware bridge disconnected.');}
+  };
+ }catch(e){
+  updateHardwareBadges('BRIDGE UNAVAILABLE','unavail');
+  toast('Could not open WebSocket: '+e.message);
+ }
+}
+
+function disconnectHardwareBridge(){
+ if(hardwareSocket){hardwareSocket.close();hardwareSocket=null;}
+ hardwareConnected=false;
+ updateHardwareBadges('SIMULATION MODE','sim');
+ toast('Switched to Simulation Mode.');
+}
+
+function updateHardwareBadges(label,cls){
+ $('topDataMode').textContent='● '+label;
+ $('hwConnBadge').textContent=label;$('hwConnBadge').className='state-badge '+cls;
+ $('hwModeText').textContent=label;
+ const isHw=(cls==='hw');
+ $('sideConnDot').className=isHw?'good':cls==='unavail'?'bad':'warn';
+ $('sideConnText').innerHTML=`<span class="dot ${isHw?'':cls==='unavail'?'bad':'warn'}"></span>${label}`;
+ $('sideImuState').textContent=isHw?'LIVE':'SIM';
+ $('speedSrcTag').textContent=isHw?'HW':'SIM';
+ $('screen1SourceBadge').textContent=isHw?'HARDWARE READINGS':'SIMULATED READINGS';
+ $('screen1SourceBadge').className='state-badge '+(isHw?'hw':'sim');
+ $('telemetryBadge').textContent=isHw?'HARDWARE':'SIMULATED';
+ $('telemetryBadge').className='state-badge '+(isHw?'hw':'sim');
+ $('imuBadge').textContent=isHw?'LIVE MPU6050':'SIMULATED';
+ $('imuBadge').className='state-badge '+(isHw?'hw':'sim');
+ $('s2Badge').textContent=isHw?'LIVE SENSOR FUSION':'SIMULATED EVALUATION';
+ $('s2Badge').className='state-badge '+(isHw?'hw':'sim');
+ $('s4StatusBadge').textContent=isHw?'BRIDGE ACTIVE':'SIMULATED';
+ $('s4StatusBadge').className='state-badge '+(isHw?'hw':'sim');
+}
+
+function updateTopPill(){
+ const pill=$('topSystemPill');
+ if(sosActive){
+  pill.className='status-pill red';pill.innerHTML='<i class="dot bad"></i> EMERGENCY ACTIVE';
+ } else if(!monitoringActive){
+  pill.className='status-pill amber';pill.innerHTML='<i class="dot warn"></i> MONITORING INACTIVE';
+ } else {
+  pill.className='status-pill';pill.innerHTML='<i class="dot"></i> MONITORING ACTIVE';
+ }
+}
+
+/* ---------- INIT ---------- */
+loadContact();
+loadHistory();
+setLabViewMode('ar');
+applyHazard('Pothole',12,'High','45 × 10 cm');
+renderEmergencyStatus();
+updatePacketPreview(null);
+updateTopPill();
+</script>
+</body>
+</html>
